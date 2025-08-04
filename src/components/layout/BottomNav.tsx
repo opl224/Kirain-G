@@ -1,15 +1,36 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, PlusSquare, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', icon: Home, label: 'Beranda' },
-  { href: '/post', icon: PlusSquare, label: 'Post' },
-  { href: '/notifications', icon: Bell, label: 'Notifikasi' },
-  { href: '/profile', icon: User, label: 'Profil' },
+  { 
+    href: '/', 
+    label: 'Beranda',
+    activeIcon: () => <Image src="/icons/house.png" alt="Beranda" width={24} height={24} />,
+    inactiveIcon: Home 
+  },
+  { 
+    href: '/post', 
+    label: 'Post',
+    activeIcon: () => <Image src="/icons/add.png" alt="Post" width={24} height={24} />,
+    inactiveIcon: PlusSquare
+  },
+  { 
+    href: '/notifications', 
+    label: 'Notifikasi',
+    activeIcon: Bell,
+    inactiveIcon: Bell 
+  },
+  { 
+    href: '/profile', 
+    label: 'Profil',
+    activeIcon: User,
+    inactiveIcon: User
+  },
 ];
 
 export default function BottomNav() {
@@ -22,6 +43,9 @@ export default function BottomNav() {
           {navItems.map((item) => {
             const isActive =
               item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            
+            const IconComponent = isActive ? item.activeIcon : item.inactiveIcon;
+
             return (
               <li key={item.href} className="h-full">
                 <Link
@@ -31,9 +55,9 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <item.icon
+                  <IconComponent
                     className="w-6 h-6"
-                    fill={isActive ? 'currentColor' : 'none'}
+                    fill={isActive && (item.href === '/notifications' || item.href === '/profile') ? 'currentColor' : 'none'}
                   />
                   <span className="text-xs">{item.label}</span>
                 </Link>

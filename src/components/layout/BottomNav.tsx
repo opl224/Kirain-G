@@ -54,7 +54,7 @@ export default function BottomNav() {
                 >
                   <IconComponent
                     className="w-6 h-6"
-                    fill={isActive ? 'currentColor' : 'none'}
+                    fill={isActive && item.href !== '/' ? 'currentColor' : 'none'}
                   />
                   <span className="text-xs">{item.label}</span>
                 </Link>

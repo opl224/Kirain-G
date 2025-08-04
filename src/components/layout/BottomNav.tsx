@@ -6,25 +6,25 @@ import { Home, PlusSquare, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { 
-    href: '/', 
+  {
+    href: '/',
     label: 'Beranda',
-    Icon: Home 
+    Icon: Home,
   },
-  { 
-    href: '/post', 
+  {
+    href: '/post',
     label: 'Post',
-    Icon: PlusSquare
+    Icon: PlusSquare,
   },
-  { 
-    href: '/notifications', 
+  {
+    href: '/notifications',
     label: 'Notifikasi',
-    Icon: Bell 
+    Icon: Bell,
   },
-  { 
-    href: '/profile', 
+  {
+    href: '/profile',
     label: 'Profil',
-    Icon: User
+    Icon: User,
   },
 ];
 
@@ -37,8 +37,10 @@ export default function BottomNav() {
         <ul className="h-full grid grid-cols-4">
           {navItems.map((item) => {
             const isActive =
-              item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
-            
+              item.href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(item.href);
+
             const IconComponent = item.Icon;
 
             return (

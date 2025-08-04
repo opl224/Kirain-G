@@ -2,29 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusSquare, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Home, PlusSquare, Bell, User } from 'lucide-react';
 
 const navItems = [
   {
     href: '/',
     label: 'Beranda',
-    Icon: Home,
+    icon: Home,
   },
   {
     href: '/post',
     label: 'Post',
-    Icon: PlusSquare,
+    icon: PlusSquare,
   },
   {
     href: '/notifications',
     label: 'Notifikasi',
-    Icon: Bell,
+    icon: Bell,
   },
   {
     href: '/profile',
     label: 'Profil',
-    Icon: User,
+    icon: User,
   },
 ];
 
@@ -32,7 +32,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden">
+    <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden z-50">
       <nav className="h-full">
         <ul className="h-full grid grid-cols-4">
           {navItems.map((item) => {
@@ -41,7 +41,7 @@ export default function BottomNav() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
-            const IconComponent = item.Icon;
+            const Icon = item.icon;
 
             return (
               <li key={item.href} className="h-full">
@@ -51,12 +51,12 @@ export default function BottomNav() {
                     'h-full flex flex-col items-center justify-center gap-1 text-muted-foreground transition-colors hover:text-primary',
                     isActive && 'text-primary'
                   )}
+                  aria-label={item.label}
                 >
-                  <IconComponent
-                    className="w-6 h-6"
-                    fill={isActive && item.href !== '/' ? 'currentColor' : 'none'}
+                  <Icon
+                    className="h-6 w-6"
+                    fill={isActive ? 'currentColor' : 'none'}
                   />
-                  <span className="text-xs">{item.label}</span>
                 </Link>
               </li>
             );

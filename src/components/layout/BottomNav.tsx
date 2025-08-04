@@ -3,28 +3,28 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, PlusSquare, Bell, User } from 'lucide-react';
+import Image from 'next/image';
 
 const navItems = [
   {
     href: '/',
     label: 'Beranda',
-    icon: Home,
+    icon: 'home',
   },
   {
     href: '/post',
     label: 'Post',
-    icon: PlusSquare,
+    icon: 'add',
   },
   {
     href: '/notifications',
     label: 'Notifikasi',
-    icon: Bell,
+    icon: 'bell',
   },
   {
     href: '/profile',
     label: 'Profil',
-    icon: User,
+    icon: 'profile',
   },
 ];
 
@@ -41,7 +41,7 @@ export default function BottomNav() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
-            const Icon = item.icon;
+            const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
 
             return (
               <li key={item.href} className="h-full">
@@ -51,12 +51,16 @@ export default function BottomNav() {
                     'h-full flex flex-col items-center justify-center gap-1 text-muted-foreground transition-colors hover:text-primary',
                     isActive && 'text-primary'
                   )}
-                  aria-label={item.label}
                 >
-                  <Icon
-                    className="h-6 w-6"
-                    fill={isActive ? 'currentColor' : 'none'}
-                  />
+                  <div className="relative w-6 h-6">
+                    <Image
+                      src={iconSrc}
+                      alt={item.label}
+                      fill
+                      className="transition-transform duration-200"
+                    />
+                  </div>
+                  <span className="text-xs">{item.label}</span>
                 </Link>
               </li>
             );

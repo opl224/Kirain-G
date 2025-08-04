@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,9 @@ import { suggestTags } from '@/ai/flows/suggest-tags';
 import { Badge } from './ui/badge';
 import { Bot, Loader, Tag, X } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   content: z
@@ -30,6 +34,8 @@ const formSchema = z.object({
 
 export default function PostEditor() {
   const { toast } = useToast();
+  const router = useRouter();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
@@ -77,12 +83,42 @@ export default function PostEditor() {
     setSuggestedTags(prev => prev.filter(t => t !== tag));
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    console.log({ ...values, tags: selectedTags });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Not logged in',
+        description: 'You must be logged in to post a note.',
+      });
+      return;
+    }
 
-    // Simulate API call
-    setTimeout(() => {
+    setIsLoading(true);
+    try {
+      // Fetch the user's profile to get their handle and avatar
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        throw new Error("User profile not found.");
+      }
+      const userProfile = userDocSnap.data();
+
+      // Create a new post document
+      await addDoc(collection(db, "posts"), {
+        author: {
+          id: user.uid,
+          name: userProfile.name,
+          handle: userProfile.handle,
+          avatarUrl: userProfile.avatarUrl,
+        },
+        content: values.content,
+        tags: selectedTags,
+        likes: 0,
+        comments: 0,
+        createdAt: serverTimestamp(),
+      });
+      
       toast({
         title: 'Note Posted!',
         description: 'Your new note is now live for others to see.',
@@ -90,8 +126,17 @@ export default function PostEditor() {
       form.reset();
       setSelectedTags([]);
       setSuggestedTags([]);
+      router.push('/');
+
+    } catch (error: any) {
+       toast({
+        variant: 'destructive',
+        title: 'Error posting note',
+        description: error.message,
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   }
 
   return (

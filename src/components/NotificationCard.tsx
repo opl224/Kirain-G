@@ -1,16 +1,30 @@
-import type { Notification } from '@/lib/types';
+
+import type { Notification, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Card,
   CardContent,
 } from '@/components/ui/card';
 import { Heart, UserPlus } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationCard({
   notification,
 }: {
   notification: Notification;
 }) {
+
+  // A dummy user for display purposes until we have real users in notifications
+  const dummyUser: User = {
+    id: 'dummy-user',
+    name: 'NotaSphere User',
+    handle: 'dummynota',
+    avatarUrl: 'https://placehold.co/100x100.png',
+    bio: '',
+    stats: { posts: 0, followers: 0, following: 0 }
+  }
+  const user = notification.user || dummyUser;
+
   const getIcon = () => {
     switch (notification.type) {
       case 'like':
@@ -22,13 +36,15 @@ export function NotificationCard({
     }
   };
 
+  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : 'just now';
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardContent className="p-4 flex items-center gap-4">
         <div className="relative">
            <Avatar>
-            <AvatarImage src={notification.user.avatarUrl} alt={notification.user.name} />
-            <AvatarFallback>{notification.user.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={user.avatarUrl} alt={user.name} />
+            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="absolute -bottom-1 -right-1 bg-background p-0.5 rounded-full">
             {getIcon()}
@@ -36,11 +52,11 @@ export function NotificationCard({
         </div>
         <div className="flex-grow">
           <p className="text-sm">
-            <span className="font-semibold">{notification.user.name}</span>{' '}
+            <span className="font-semibold">{user.name}</span>{' '}
             {notification.content}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {notification.timestamp}
+            {timeAgo}
           </p>
         </div>
       </CardContent>

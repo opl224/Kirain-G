@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, PlusSquare, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,26 +9,22 @@ const navItems = [
   { 
     href: '/', 
     label: 'Beranda',
-    activeIcon: () => <Image src="/icons/house.png" alt="Beranda" width={24} height={24} />,
-    inactiveIcon: Home 
+    Icon: Home 
   },
   { 
     href: '/post', 
     label: 'Post',
-    activeIcon: () => <Image src="/icons/add.png" alt="Post" width={24} height={24} />,
-    inactiveIcon: PlusSquare
+    Icon: PlusSquare
   },
   { 
     href: '/notifications', 
     label: 'Notifikasi',
-    activeIcon: Bell,
-    inactiveIcon: Bell 
+    Icon: Bell 
   },
   { 
     href: '/profile', 
     label: 'Profil',
-    activeIcon: User,
-    inactiveIcon: User
+    Icon: User
   },
 ];
 
@@ -44,7 +39,7 @@ export default function BottomNav() {
             const isActive =
               item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             
-            const IconComponent = isActive ? item.activeIcon : item.inactiveIcon;
+            const IconComponent = item.Icon;
 
             return (
               <li key={item.href} className="h-full">
@@ -57,7 +52,7 @@ export default function BottomNav() {
                 >
                   <IconComponent
                     className="w-6 h-6"
-                    fill={isActive && (item.href === '/notifications' || item.href === '/profile') ? 'currentColor' : 'none'}
+                    fill={isActive ? 'currentColor' : 'none'}
                   />
                   <span className="text-xs">{item.label}</span>
                 </Link>

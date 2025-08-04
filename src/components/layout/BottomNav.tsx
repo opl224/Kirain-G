@@ -31,7 +31,10 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <item.icon className="w-6 h-6" />
+                  <item.icon
+                    className="w-6 h-6"
+                    fill={isActive ? 'currentColor' : 'none'}
+                  />
                   <span className="text-xs">{item.label}</span>
                 </Link>
               </li>

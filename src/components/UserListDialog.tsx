@@ -11,13 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
+import { Button } from './ui/button';
 
 interface UserListDialogProps {
   userIds: string[];
@@ -123,12 +125,17 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
-      <DialogContent className="pt-16">
-        <DialogHeader className="px-6">
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="p-0">
+        <div className="flex items-center p-4 border-b">
+            <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                    <ArrowLeft className="h-6 w-6" />
+                </Button>
+            </DialogClose>
+            <h2 className="text-lg font-semibold ml-4">{title}</h2>
+        </div>
         <ScrollArea className="h-full">
-            <div className="px-6 pb-6">
+            <div className="p-2">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <UserRowSkeleton key={i} />)
                 ) : users.length > 0 ? (

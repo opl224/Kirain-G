@@ -6,11 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from './PostCard';
 import { Separator } from './ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
-import { Camera, Loader, Menu, BadgeCheck, Lock } from 'lucide-react';
+import { Camera, Loader, Menu, BadgeCheck, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -161,9 +161,14 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
             <Button className="w-full">Ubah Profil</Button>
           </DialogTrigger>
           <DialogContent className="p-0">
-            <DialogHeader className="p-6 pb-0 pt-16">
-              <DialogTitle>Ubah Profil</DialogTitle>
-            </DialogHeader>
+             <div className="flex items-center p-4 border-b">
+                <DialogClose asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                        <ArrowLeft className="h-6 w-6" />
+                    </Button>
+                </DialogClose>
+                <h2 className="text-lg font-semibold ml-4">Ubah Profil</h2>
+            </div>
             <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />
           </DialogContent>
         </Dialog>

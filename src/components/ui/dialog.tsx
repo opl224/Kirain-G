@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       )}
-      <div className="flex-grow overflow-y-auto">
+      <div className="flex-grow flex flex-col overflow-y-auto">
         {children}
       </div>
     </DialogPrimitive.Content>

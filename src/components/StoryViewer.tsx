@@ -31,75 +31,81 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     const profileLink = `/user?id=${currentStory.author.id}`;
 
     const goToNextStory = useCallback(() => {
-        setStoryIndex(prevIndex => {
-            if (prevIndex < stories.length - 1) {
-                return prevIndex + 1;
-            }
-            onClose(); // Close viewer after the last story
-            return prevIndex;
-        });
-    }, [stories.length, onClose]);
+        setStoryIndex(prevIndex => Math.min(prevIndex + 1, stories.length));
+    }, [stories.length]);
 
     const goToPrevStory = () => {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
+
+    useEffect(() => {
+        if (storyIndex >= stories.length) {
+            onClose();
+        }
+    }, [storyIndex, stories.length, onClose]);
+
 
     const startTimer = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         setProgress(0);
 
-        const video = videoRef.current;
-        const duration = currentStory.mediaType === 'video' && video?.duration ? video.duration * 1000 : STORY_DURATION;
+        if (isPaused || !currentStory) return;
 
-        if (isPaused) return;
+        if (currentStory.mediaType === 'video' && videoRef.current) {
+            const video = videoRef.current;
+            const onTimeUpdate = () => {
+                if (video.duration) {
+                    setProgress((video.currentTime / video.duration) * 100);
+                }
+            };
+            const onEnded = () => {
+                goToNextStory();
+            };
+            video.addEventListener('timeupdate', onTimeUpdate);
+            video.addEventListener('ended', onEnded);
+            video.play().catch(console.error);
 
-        progressIntervalRef.current = setInterval(() => {
-             if (!isPaused) {
+            return () => {
+                video.removeEventListener('timeupdate', onTimeUpdate);
+                video.removeEventListener('ended', onEnded);
+            };
+        } else {
+            // Image story
+            progressIntervalRef.current = setInterval(() => {
                 setProgress(p => {
-                    const newProgress = p + (100 / (duration / 100));
-                    if (newProgress >= 100) {
-                        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-                        return 100;
-                    }
-                    return newProgress;
-                });
-            }
-        }, 100);
+                     const newProgress = p + (100 / (STORY_DURATION / 100));
+                     if (newProgress >= 100) {
+                         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+                         return 100;
+                     }
+                     return newProgress;
+                 });
+             }, 100);
+ 
+             timerRef.current = setTimeout(goToNextStory, STORY_DURATION);
+        }
 
-        timerRef.current = setTimeout(goToNextStory, duration);
-    }, [currentStory.mediaType, goToNextStory, isPaused]);
+    }, [currentStory, isPaused, goToNextStory]);
+
 
     useEffect(() => {
-      startTimer();
-      return () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      }
-    }, [storyIndex, startTimer]);
+      // Reset and start timer when storyIndex or isPaused changes
+      const cleanup = startTimer();
+      return cleanup;
+    }, [storyIndex, isPaused, startTimer]);
+
 
     useEffect(() => {
         const video = videoRef.current;
         if (video) {
-            video.pause();
-            video.load();
-            if (!isPaused) {
+            if (isPaused) {
+                video.pause();
+            } else {
                 video.play().catch(console.error);
             }
         }
-    }, [storyIndex, isPaused]);
-
-     useEffect(() => {
-        const video = videoRef.current;
-        if (isPaused) {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-            video?.pause();
-        } else {
-            startTimer();
-            video?.play().catch(console.error);
-        }
-    }, [isPaused, startTimer]);
+    }, [isPaused]);
 
 
     const toggleMute = (e: React.MouseEvent) => {
@@ -111,38 +117,44 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     };
 
     const handleInteractionStart = () => setIsPaused(true);
-    const handleInteractionEnd = () => setIsPaused(false);
+    const handleInteractionEnd = () => {
+        // Use a timeout to avoid conflict with navigation click
+        setTimeout(() => setIsPaused(false), 100);
+    }
     
     const handleClickNavigation = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (isPaused) return; // Don't navigate if paused by holding
         const clickX = e.clientX;
-        const screenWidth = window.innerWidth;
+        // Use clientWidth of the target div for more reliable width calculation
+        const screenWidth = e.currentTarget.clientWidth;
         if (clickX < screenWidth / 3) {
             goToPrevStory();
-        } else if (clickX > (screenWidth * 2) / 3) {
+        } else { // Let the right 2/3 of screen go to next
             goToNextStory();
         }
     };
 
+    if (!currentStory) {
+        return null;
+    }
+
 
     return (
         <div 
-            className="relative w-full h-full rounded-lg overflow-hidden flex flex-col bg-black"
+            className="relative w-full h-full rounded-lg overflow-hidden flex flex-col bg-black select-none"
             onMouseDown={handleInteractionStart}
             onMouseUp={handleInteractionEnd}
             onMouseLeave={handleInteractionEnd}
             onTouchStart={handleInteractionStart}
             onTouchEnd={handleInteractionEnd}
         >
-            <div className="absolute top-0 left-0 right-0 p-4 z-10">
+            <div className="absolute top-0 left-0 right-0 p-4 z-10" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
                 <div className="flex items-center gap-1 w-full">
                     {stories.map((_, idx) => (
                         <div key={idx} className="relative w-full h-1 bg-white/30 rounded-full overflow-hidden">
                            {idx < storyIndex && <div className="absolute top-0 left-0 h-full w-full bg-white" />}
                            {idx === storyIndex && (
-                                <div 
-                                    className="absolute top-0 left-0 h-full bg-white"
-                                    style={{ width: `${progress}%` }}
-                                />
+                                <Progress value={progress} className="w-full h-full bg-white !p-0" />
                            )}
                         </div>
                     ))}
@@ -168,17 +180,20 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                     </div>
                 </div>
             </div>
-
-            <div className="absolute inset-0 z-20 flex" onClick={handleClickNavigation}>
-                <div className="flex-1" />
-                <div className="flex-1" />
-                <div className="flex-1" />
+            
+            <div 
+                className="absolute inset-0 z-20 flex w-full h-full"
+                onClick={handleClickNavigation}
+            >
+                <div className="w-1/3 h-full"/>
+                <div className="w-2/3 h-full"/>
             </div>
+            
 
             {currentStory.mediaType === 'image' ? (
                 <img src={currentStory.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${currentStory.author.name}`} />
             ): (
-                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline />
+                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline onLoadedData={startTimer} />
             )}
         </div>
     );

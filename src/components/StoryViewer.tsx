@@ -75,8 +75,6 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
             imageTimerRef.current = null;
         }
 
-        if (isPaused) return;
-
         if (currentStory.mediaType === 'image') {
             const startTime = Date.now();
             imageTimerRef.current = setInterval(() => {
@@ -102,7 +100,7 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
             }
         }
 
-    }, [storyIndex, currentStory, goToNextStory, isPaused]);
+    }, [storyIndex, currentStory, goToNextStory]);
     
     // Handle video play/pause state
     useEffect(() => {

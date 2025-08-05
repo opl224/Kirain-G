@@ -55,7 +55,7 @@ const TruncatedText = ({ text, lineClamp = 2, className }: TruncatedTextProps) =
         className
       )}
       style={isTruncated ? lineClampStyle : {}}
-      title={canBeExpanded ? "Klik untuk melihat" : ""}
+      title={canBeExpanded ? "Klik untuk melihat lebih banyak" : ""}
     >
       {text}
     </p>

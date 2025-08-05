@@ -129,7 +129,7 @@ export default function UserListDialog({ userIds, title, children }: UserListDia
                 ) : users.length > 0 ? (
                     users.map(user => <UserRow key={user.id} user={user} onDialogClose={handleDialogClose} />)
                 ) : (
-                    <p className="text-center text-muted-foreground py-10">No users to show.</p>
+                    <p className="text-center text-muted-foreground py-10">Tidak ada pengguna untuk ditampilkan.</p>
                 )}
             </div>
         </ScrollArea>

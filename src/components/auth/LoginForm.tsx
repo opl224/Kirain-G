@@ -25,8 +25,8 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  email: z.string().email({ message: 'Silakan masukkan email yang valid.' }),
+  password: z.string().min(1, { message: 'Kata sandi diperlukan.' }),
 });
 
 export default function LoginForm() {
@@ -47,15 +47,15 @@ export default function LoginForm() {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: 'Login Successful',
-        description: "Welcome back!",
+        title: 'Login Berhasil',
+        description: "Selamat datang kembali!",
       });
       router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message,
+        title: 'Login Gagal',
+        description: 'Email atau kata sandi salah.',
       });
     } finally {
       setIsLoading(false);
@@ -74,7 +74,7 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="you@example.com" {...field} />
+                    <Input placeholder="anda@contoh.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,7 +85,7 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Kata Sandi</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -95,16 +95,16 @@ export default function LoginForm() {
             />
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              Login
+              Masuk
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="p-6 pt-0">
         <p className="text-sm text-center w-full">
-          Don't have an account?{' '}
+          Belum punya akun?{' '}
           <Link href="/signup" className="text-primary hover:underline">
-            Sign up
+            Daftar
           </Link>
         </p>
       </CardFooter>

@@ -56,7 +56,7 @@ export default function NotificationsPage() {
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <div className="flex items-center gap-3 mb-8">
         <Bell className="w-8 h-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Notifications</h1>
+        <h1 className="text-3xl font-bold font-headline">Notifikasi</h1>
       </div>
 
       {isLoading ? (
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="text-center py-10">
-          <p className="text-muted-foreground">You have no new notifications.</p>
+          <p className="text-muted-foreground">Anda tidak memiliki notifikasi baru.</p>
         </div>
       )}
     </div>

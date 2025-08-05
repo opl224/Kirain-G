@@ -133,17 +133,17 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
           />
         </div>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Posts" value={posts.length} />
-          <UserListDialog userIds={currentUser.followers || []} title="Followers">
+          <StatItem label="Postingan" value={posts.length} />
+          <UserListDialog userIds={currentUser.followers || []} title="Pengikut">
             <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{currentUser.stats.followers}</p>
-                <p className="text-sm text-muted-foreground">Followers</p>
+                <p className="text-sm text-muted-foreground">Pengikut</p>
             </div>
           </UserListDialog>
-          <UserListDialog userIds={currentUser.following || []} title="Following">
+          <UserListDialog userIds={currentUser.following || []} title="Mengikuti">
              <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{currentUser.stats.following}</p>
-                <p className="text-sm text-muted-foreground">Following</p>
+                <p className="text-sm text-muted-foreground">Mengikuti</p>
             </div>
           </UserListDialog>
         </div>
@@ -157,11 +157,11 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       <div className="mt-6">
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full">Edit Profile</Button>
+            <Button className="w-full">Ubah Profil</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
+              <DialogTitle>Ubah Profil</DialogTitle>
             </DialogHeader>
             <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />
           </DialogContent>
@@ -171,12 +171,12 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       <Separator className="my-8"/>
 
       <div>
-        <h2 className="text-xl font-bold font-headline mb-4 text-center">Notes</h2>
+        <h2 className="text-xl font-bold font-headline mb-4 text-center">Catatan</h2>
         <div className="space-y-6">
           {posts.length > 0 ? (
             posts.map(post => <PostCard key={post.id} post={post} />)
           ) : (
-            <p className="text-center text-muted-foreground py-8">No notes yet.</p>
+            <p className="text-center text-muted-foreground py-8">Belum ada catatan.</p>
           )}
         </div>
       </div>

@@ -29,8 +29,8 @@ import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/fires
 const formSchema = z.object({
   content: z
     .string()
-    .min(3, { message: 'Your note must be at least 3 characters long.' })
-    .max(500, { message: 'Your note cannot be longer than 500 characters.' }),
+    .min(3, { message: 'Catatan Anda harus setidaknya 3 karakter.' })
+    .max(500, { message: 'Catatan Anda tidak boleh lebih dari 500 karakter.' }),
 });
 
 export default function PostEditor() {
@@ -56,8 +56,8 @@ export default function PostEditor() {
     if (!content || content.length < 10) {
       toast({
         variant: 'destructive',
-        title: 'Content too short',
-        description: 'Please write at least 10 characters to get tag suggestions.',
+        title: 'Konten terlalu pendek',
+        description: 'Silakan tulis setidaknya 10 karakter untuk mendapatkan saran tag.',
       });
       return;
     }
@@ -70,7 +70,7 @@ export default function PostEditor() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to suggest tags. Please try again.',
+        description: 'Gagal menyarankan tag. Silakan coba lagi.',
       });
     } finally {
       setIsSuggesting(false);
@@ -88,8 +88,8 @@ export default function PostEditor() {
     if (!user) {
       toast({
         variant: 'destructive',
-        title: 'Not logged in',
-        description: 'You must be logged in to post a note.',
+        title: 'Belum masuk',
+        description: 'Anda harus masuk untuk memposting catatan.',
       });
       return;
     }
@@ -101,7 +101,7 @@ export default function PostEditor() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        throw new Error("User profile not found.");
+        throw new Error("Profil pengguna tidak ditemukan.");
       }
       const userProfile = userDocSnap.data();
 
@@ -122,8 +122,8 @@ export default function PostEditor() {
       });
       
       toast({
-        title: 'Note Posted!',
-        description: 'Your new note is now live for others to see.',
+        title: 'Catatan Diposting!',
+        description: 'Catatan baru Anda sekarang dapat dilihat oleh orang lain.',
       });
       form.reset();
       setSelectedTags([]);
@@ -133,7 +133,7 @@ export default function PostEditor() {
     } catch (error: any) {
        toast({
         variant: 'destructive',
-        title: 'Error posting note',
+        title: 'Error memposting catatan',
         description: error.message,
       });
     } finally {
@@ -151,10 +151,10 @@ export default function PostEditor() {
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Note</FormLabel>
+                  <FormLabel>Catatan Anda</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Share your thoughts with the world..."
+                      placeholder="Bagikan pemikiran Anda dengan dunia..."
                       className="min-h-[150px] resize-y"
                       {...field}
                     />
@@ -176,14 +176,14 @@ export default function PostEditor() {
                 ) : (
                   <Bot className="mr-2 h-4 w-4" />
                 )}
-                Suggest Tags
+                Sarankan Tag
               </Button>
 
               { (isSuggesting || suggestedTags.length > 0 || selectedTags.length > 0) &&
                 <div className="space-y-2 p-3 rounded-md border bg-muted/50">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Tag className="h-4 w-4" />
-                    <span>Tags</span>
+                    <span>Tag</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedTags.map((tag) => (
@@ -197,7 +197,7 @@ export default function PostEditor() {
                         {tag}
                       </Badge>
                     ))}
-                    {isSuggesting && <Badge variant="outline">Searching...</Badge>}
+                    {isSuggesting && <Badge variant="outline">Mencari...</Badge>}
                   </div>
                 </div>
               }
@@ -205,7 +205,7 @@ export default function PostEditor() {
 
             <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              Post Note
+              Posting Catatan
             </Button>
           </form>
         </Form>

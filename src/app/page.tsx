@@ -44,7 +44,7 @@ export default function HomePage() {
         NotaSphere
       </h1>
       {isLoading ? (
-         <p className="text-center text-muted-foreground">Loading posts...</p>
+         <p className="text-center text-muted-foreground">Memuat postingan...</p>
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (

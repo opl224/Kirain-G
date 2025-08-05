@@ -27,7 +27,7 @@ const formSchema = z.object({
   name: z.string()
     .min(2, { message: 'Nama harus terdiri dari minimal 2 karakter.' })
     .max(15, { message: 'Nama tidak boleh lebih dari 15 karakter.' })
-    .regex(/^[a-zA-Z0-9]+$/, 'Nama hanya boleh berisi huruf dan angka, tanpa spasi.'),
+    .regex(/^[a-zA-Z0-9\s]+$/, 'Nama hanya boleh berisi huruf, angka, dan spasi.'),
   handle: z.string()
     .min(3, { message: 'Username harus terdiri dari minimal 3 karakter.' })
     .max(10, { message: 'Username tidak boleh lebih dari 10 karakter.'})

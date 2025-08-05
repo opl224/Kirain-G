@@ -65,7 +65,7 @@ export function PostCard({ post }: { post: Post }) {
         </Button>
         <Button variant="ghost" size="sm" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
           <Share2 className="h-4 w-4" />
-          <span>Share</span>
+          <span>Bagikan</span>
         </Button>
       </CardFooter>
     </Card>

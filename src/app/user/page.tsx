@@ -79,7 +79,7 @@ export default function UserProfilePage() {
             setIsFollowing(true);
           }
         } else {
-          console.log('No such user!');
+          console.log('Pengguna tidak ditemukan!');
           router.push('/'); // Or a 404 page
         }
 
@@ -110,8 +110,8 @@ export default function UserProfilePage() {
     if (!authUser) {
       toast({
         variant: 'destructive',
-        title: 'Not Logged In',
-        description: 'You must be logged in to follow users.',
+        title: 'Belum Masuk',
+        description: 'Anda harus masuk untuk mengikuti pengguna.',
       });
       return;
     }
@@ -135,7 +135,7 @@ export default function UserProfilePage() {
           'stats.following': increment(-1),
         });
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}, followers: p.followers?.filter(id => id !== authUser.uid)} : null);
-        toast({ title: `You unfollowed @${userProfile.handle}` });
+        toast({ title: `Anda berhenti mengikuti @${userProfile.handle}` });
       } else {
         // Follow
         await updateDoc(currentUserRef, {
@@ -162,21 +162,21 @@ export default function UserProfilePage() {
                 avatarUrl: authUserData.avatarUrl,
             },
             type: 'follow',
-            content: `started following you.`,
+            content: `mulai mengikuti Anda.`,
             read: false,
             createdAt: serverTimestamp(),
         });
 
 
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
-        toast({ title: `You are now following @${userProfile.handle}` });
+        toast({ title: `Anda sekarang mengikuti @${userProfile.handle}` });
       }
       setIsFollowing(!isFollowing);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not update follow status. Please try again.',
+        description: 'Tidak dapat memperbarui status mengikuti. Silakan coba lagi.',
       });
       console.error(error);
     } finally {
@@ -212,17 +212,17 @@ export default function UserProfilePage() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Posts" value={userPosts.length} />
-          <UserListDialog userIds={userProfile.followers || []} title="Followers">
+          <StatItem label="Postingan" value={userPosts.length} />
+          <UserListDialog userIds={userProfile.followers || []} title="Pengikut">
             <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{userProfile.stats.followers}</p>
-                <p className="text-sm text-muted-foreground">Followers</p>
+                <p className="text-sm text-muted-foreground">Pengikut</p>
             </div>
           </UserListDialog>
-          <UserListDialog userIds={userProfile.following || []} title="Following">
+          <UserListDialog userIds={userProfile.following || []} title="Mengikuti">
              <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{userProfile.stats.following}</p>
-                <p className="text-sm text-muted-foreground">Following</p>
+                <p className="text-sm text-muted-foreground">Mengikuti</p>
             </div>
           </UserListDialog>
         </div>
@@ -243,7 +243,7 @@ export default function UserProfilePage() {
           variant={isFollowing ? 'outline' : 'default'}
         >
           {followIsLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isFollowing ? 'Following' : 'Follow'}
+          {isFollowing ? 'Mengikuti' : 'Ikuti'}
         </Button>
       </div>
 
@@ -251,14 +251,14 @@ export default function UserProfilePage() {
 
       <div>
         <h2 className="text-xl font-bold font-headline mb-4 text-center">
-          Notes
+          Catatan
         </h2>
         <div className="space-y-6">
           {userPosts.length > 0 ? (
             userPosts.map((post) => <PostCard key={post.id} post={post} />)
           ) : (
             <p className="text-center text-muted-foreground py-8">
-              No notes yet.
+              Belum ada catatan.
             </p>
           )}
         </div>

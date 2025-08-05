@@ -26,10 +26,10 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader } from 'lucide-react';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  handle: z.string().min(3, { message: 'Handle must be at least 3 characters.' }).regex(/^[a-zA-Z0-9_]+$/, 'Handle can only contain letters, numbers, and underscores.'),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  name: z.string().min(2, { message: 'Nama harus minimal 2 karakter.' }),
+  handle: z.string().min(3, { message: 'Username harus minimal 3 karakter.' }).regex(/^[a-zA-Z0-9_]+$/, 'Username hanya dapat berisi huruf, angka, dan garis bawah.'),
+  email: z.string().email({ message: 'Silakan masukkan email yang valid.' }),
+  password: z.string().min(6, { message: 'Kata sandi harus minimal 6 karakter.' }),
 });
 
 export default function SignupForm() {
@@ -75,15 +75,19 @@ export default function SignupForm() {
       });
 
       toast({
-        title: 'Account Created',
-        description: "Welcome to NotaSphere!",
+        title: 'Akun Dibuat',
+        description: "Selamat datang di NotaSphere!",
       });
       router.push('/');
     } catch (error: any) {
+        let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "Email ini sudah digunakan. Silakan gunakan email lain.";
+        }
       toast({
         variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message,
+        title: 'Pendaftaran Gagal',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -100,9 +104,9 @@ export default function SignupForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Nama</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="Nama Anda" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +119,7 @@ export default function SignupForm() {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="johndoe" {...field} />
+                    <Input placeholder="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -128,7 +132,7 @@ export default function SignupForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="you@example.com" {...field} />
+                    <Input placeholder="anda@contoh.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +143,7 @@ export default function SignupForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Kata Sandi</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -149,16 +153,16 @@ export default function SignupForm() {
             />
             <Button type="submit" disabled={isLoading} className="w-full !mt-6">
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              Create Account
+              Buat Akun
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="p-6 pt-0">
          <p className="text-sm text-center w-full">
-          Already have an account?{' '}
+          Sudah punya akun?{' '}
           <Link href="/login" className="text-primary hover:underline">
-            Login
+            Masuk
           </Link>
         </p>
       </CardFooter>

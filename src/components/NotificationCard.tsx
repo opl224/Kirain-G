@@ -4,7 +4,7 @@
 import type { Notification } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, UserPlus, CheckCircle } from 'lucide-react';
+import { Heart, UserPlus, BadgeCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +37,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
       case 'follow':
         return <UserPlus className="h-5 w-5 text-primary" />;
       case 'verification_request':
-        return <CheckCircle className="h-5 w-5 text-blue-500" />;
+        return <BadgeCheck className="h-5 w-5 text-blue-500" />;
       default:
         return null;
     }
@@ -54,7 +54,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
       const notifRef = doc(db, 'notifications', notification.id);
       await deleteDoc(notifRef);
 
-      toast({ title: "User Verified", description: `${notification.sender.handle} is now verified.` });
+      toast({ title: "Pengguna Diverifikasi", description: `${notification.sender.handle} sekarang terverifikasi.` });
       
       onRemove(notification.id);
 
@@ -69,7 +69,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
     try {
         const notifRef = doc(db, 'notifications', notification.id);
         await deleteDoc(notifRef);
-        toast({ title: "Request Declined" });
+        toast({ title: "Permintaan Ditolak" });
         onRemove(notification.id);
     } catch (error: any) {
         toast({ variant: 'destructive', title: "Error", description: error.message });
@@ -78,7 +78,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
   };
 
 
-  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : 'just now';
+  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
 
   const senderProfileLink = `/user?id=${notification.sender.id}`;
 
@@ -113,10 +113,10 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
         {isSuperUser && isVerificationRequest && (
             <div className="flex justify-end gap-2">
                 <Button size="sm" variant="outline" onClick={handleDecline} disabled={isProcessing}>
-                    Decline
+                    Tolak
                 </Button>
                 <Button size="sm" onClick={handleApprove} disabled={isProcessing}>
-                    Approve
+                    Setujui
                 </Button>
             </div>
         )}

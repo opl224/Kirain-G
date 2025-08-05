@@ -186,7 +186,7 @@ export default function SettingsPage() {
                 <>
                     <Separator/>
                     <SettingItem>
-                        <button onClick={handleVerificationRequest} className="text-base w-full text-left">Minta Verified</button>
+                        <button onClick={handleVerificationRequest} className="text-base w-full text-left">Minta Verifikasi</button>
                     </SettingItem>
                 </>
              )}
@@ -213,7 +213,7 @@ export default function SettingsPage() {
             <CardContent className="p-0">
                 <SettingItem>
                     <button onClick={handleLogout} className="text-base w-full text-left text-destructive">
-                      Logout
+                      Keluar
                     </button>
                 </SettingItem>
             </CardContent>

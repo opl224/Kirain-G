@@ -10,22 +10,22 @@ const navItems = [
   {
     href: '/',
     icon: 'home',
-    label: 'Home',
+    label: 'Beranda',
   },
   {
     href: '/post',
     icon: 'add',
-    label: 'Post',
+    label: 'Posting',
   },
   {
     href: '/notifications',
     icon: 'bell',
-    label: 'Notifications',
+    label: 'Notifikasi',
   },
   {
     href: '/profile',
     icon: 'profile',
-    label: 'Profile',
+    label: 'Profil',
   },
 ];
 

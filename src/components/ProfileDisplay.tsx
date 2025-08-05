@@ -13,13 +13,10 @@ import TruncatedText from './TruncatedText';
 import { Camera, Loader, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, setDoc, collection } from 'firebase/firestore';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from './ui/dropdown-menu';
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
+import Link from 'next/link';
+
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
@@ -38,23 +35,6 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
   const { toast } = useToast();
   const router = useRouter();
 
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({
-        title: 'Logout Berhasil',
-        description: 'Anda telah keluar dari akun Anda.',
-      });
-      router.push('/login');
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Logout Gagal',
-        description: 'Terjadi kesalahan saat mencoba keluar.',
-      });
-    }
-  };
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
     setCurrentUser(prevUser => ({...prevUser, ...updatedUser}));
@@ -114,86 +94,15 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
     }
   };
   
-  const handlePrivacyChange = async (isPrivate: boolean) => {
-    try {
-      const userDocRef = doc(db, 'users', currentUser.id);
-      await updateDoc(userDocRef, { isPrivate });
-      handleProfileUpdate({ isPrivate });
-      toast({
-        title: 'Pengaturan Privasi Diperbarui',
-        description: `Akun Anda sekarang ${isPrivate ? 'privat' : 'publik'}.`,
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Gagal Memperbarui Privasi',
-        description: error.message,
-      });
-    }
-  };
-
-  const handleVerificationRequest = async () => {
-    const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
-    try {
-      const requestRef = doc(collection(db, 'verificationRequests'));
-      await setDoc(requestRef, {
-        userId: currentUser.id,
-        userName: currentUser.name,
-        userHandle: currentUser.handle,
-        status: 'pending',
-        requestedAt: new Date(),
-        superUserId: superUserId,
-      });
-      toast({
-        title: 'Permintaan Terkirim',
-        description: 'Permintaan verifikasi Anda telah dikirim ke super user.',
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Gagal Mengirim Permintaan',
-        description: error.message,
-      });
-    }
-  };
-
-
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <div className="flex justify-between items-center mb-4 h-10">
         <h2 className="text-xl font-bold">@{currentUser.handle}</h2>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="focus-visible:ring-0 focus-visible:ring-offset-0">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push('/profile/saved')}>
-              Tersimpan
-            </DropdownMenuItem>
-             <DropdownMenuItem onSelect={() => router.push('/profile/likes')}>
-              Suka
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleVerificationRequest}>
-              Minta Verified
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Pengaturan Akun</DropdownMenuLabel>
-            <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-              <Label htmlFor="privacy-switch" className="flex-grow pr-2">Akun Privat</Label>
-              <Switch
-                id="privacy-switch"
-                checked={!!currentUser.isPrivate}
-                onCheckedChange={handlePrivacyChange}
-              />
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleLogout} className="text-destructive focus:text-destructive">
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Link href="/profile/settings" passHref>
+          <Button variant="ghost" size="icon" className="focus-visible:ring-0 focus-visible:ring-offset-0">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </Link>
       </div>
 
 
@@ -227,7 +136,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       </div>
 
       <div className="mt-6">
-        <p className="text-xl font-bold">{currentUser.name}</p>
+        <p className="text-xl font-bold" onClick={(e) => (e.target as HTMLElement).classList.toggle('truncate')}>{currentUser.name}</p>
         {currentUser.bio && <TruncatedText text={currentUser.bio} lineClamp={2} className="mt-2 text-foreground/90" />}
       </div>
       

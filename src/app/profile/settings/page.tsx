@@ -11,7 +11,6 @@ import { signOut } from 'firebase/auth';
 import type { User } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +18,7 @@ import { ChevronRight, ArrowLeft, ShieldCheck, Moon } from 'lucide-react';
 import Link from 'next/link';
 import PageLoader from '@/components/PageLoader';
 import { DarkModeSwitch } from '@/components/DarkModeSwitch';
+import { PrivacyLock } from '@/components/PrivacyLock';
 
 export default function SettingsPage() {
   const { user: authUser, isLoading: authIsLoading } = useAuth();
@@ -191,8 +191,7 @@ export default function SettingsPage() {
           <CardContent className="p-0">
              <SettingItem>
                 <Label htmlFor="privacy-switch" className="flex-grow text-base">Akun Privat</Label>
-                <Switch
-                  id="privacy-switch"
+                <PrivacyLock
                   checked={!!currentUser.isPrivate}
                   onCheckedChange={handlePrivacyChange}
                 />

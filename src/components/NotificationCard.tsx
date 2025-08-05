@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, UserPlus, BadgeCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { id } from 'date-fns/locale';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -78,7 +79,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
   };
 
 
-  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
+  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: id }) : 'baru saja';
 
   const senderProfileLink = `/user?id=${notification.sender.id}`;
 

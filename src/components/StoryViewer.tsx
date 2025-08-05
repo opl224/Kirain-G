@@ -8,6 +8,7 @@ import { X, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 interface StoryViewerProps {
     stories: Story[];
@@ -24,7 +25,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const currentStory = stories[storyIndex];
 
@@ -36,7 +36,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
 
-    // Effect to handle story completion and closing the viewer
+    // Effect to handle closing the viewer when stories end
     useEffect(() => {
         if (storyIndex >= stories.length) {
             onClose();
@@ -45,17 +45,14 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
 
 
     const startTimer = useCallback(() => {
-        // Clear any existing timers
         if (timerRef.current) clearTimeout(timerRef.current);
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-
         if (isPaused || !currentStory) return;
 
         if (currentStory.mediaType === 'video' && videoRef.current) {
             const video = videoRef.current;
             
             const onTimeUpdate = () => {
-                if (video.duration) {
+                 if (video.duration) {
                     setProgress((video.currentTime / video.duration) * 100);
                 }
             };
@@ -65,6 +62,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             video.addEventListener('ended', onEnded);
             
             video.play().catch(error => {
+                // Ignore AbortError which can happen if the user navigates away quickly
                 if (error.name !== 'AbortError') {
                     console.error("Video play error:", error);
                 }
@@ -76,41 +74,35 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             };
 
         } else {
-            // Image story
-            const startTime = Date.now();
-            const startProgress = progress; // Resume from current progress
+            const startTime = Date.now() - (progress / 100) * STORY_DURATION;
 
             const tick = () => {
                 const elapsedTime = Date.now() - startTime;
-                const newProgress = startProgress + (elapsedTime / STORY_DURATION) * 100;
+                const newProgress = (elapsedTime / STORY_DURATION) * 100;
 
                 if (newProgress >= 100) {
                     setProgress(100);
                     goToNextStory();
                 } else {
                     setProgress(newProgress);
-                    timerRef.current = setTimeout(tick, 50); // Update progress roughly every 50ms
+                    timerRef.current = setTimeout(tick, 50);
                 }
             };
-
             timerRef.current = setTimeout(tick, 50);
         }
     }, [currentStory, isPaused, goToNextStory, progress]);
 
 
-    // Effect to reset progress when story changes
     useEffect(() => {
         setProgress(0);
     }, [storyIndex]);
 
-    // Effect to start/stop timer when story or pause state changes
     useEffect(() => {
       const cleanup = startTimer();
       return cleanup;
     }, [storyIndex, isPaused, startTimer]);
 
 
-    // Effect to handle video element pause/play
     useEffect(() => {
         const video = videoRef.current;
         if (video) {
@@ -126,7 +118,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         }
     }, [isPaused]);
 
-
     const toggleMute = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsMuted(!isMuted);
@@ -137,17 +128,12 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
 
     const handleInteractionStart = () => setIsPaused(true);
     const handleInteractionEnd = () => {
-        // Use a timeout to avoid conflict with navigation click
         setTimeout(() => setIsPaused(false), 100);
     }
     
     const handleClickNavigation = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isPaused) return; // Don't navigate if paused by holding
+        if (isPaused) return; 
         
-        setIsPaused(false);
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-
         const clickX = e.nativeEvent.offsetX;
         const screenWidth = e.currentTarget.clientWidth;
 
@@ -162,7 +148,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         return null;
     }
     
-    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
+    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { addSuffix: true, locale: id }) : 'baru saja';
     const profileLink = `/user?id=${currentStory.author.id}`;
 
 
@@ -176,19 +162,17 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             ): (
                 <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline onLoadedData={startTimer} />
             )}
-
-            {/* Click handlers are now on a single div over the content */}
-            <div className="absolute inset-0 z-10 flex"
+            
+            <div 
+                className="absolute inset-0 z-10"
                 onMouseDown={handleInteractionStart}
                 onMouseUp={handleInteractionEnd}
                 onMouseLeave={handleInteractionEnd}
                 onTouchStart={handleInteractionStart}
                 onTouchEnd={handleInteractionEnd}
                 onClick={handleClickNavigation}
-            >
-            </div>
+            />
 
-            {/* Header with progress bar, user info, and controls. High z-index to be on top. */}
             <div className="absolute top-0 left-0 right-0 p-4 z-20" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
                 <div className="flex items-center gap-1 w-full">
                     {stories.map((_, idx) => (

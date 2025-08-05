@@ -11,7 +11,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Bookmark, BadgeCheck, Loader } from 'lucide-react';
+import { Heart, Bookmark, BadgeCheck, Loader, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect } from 'react';
@@ -21,8 +21,20 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-export function PostCard({ post }: { post: Post }) {
+
+export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (postId: string) => void }) {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -30,6 +42,8 @@ export function PostCard({ post }: { post: Post }) {
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const isAuthor = user?.uid === post.author.id;
 
   useEffect(() => {
     if (user) {
@@ -149,13 +163,39 @@ export function PostCard({ post }: { post: Post }) {
     }
   }
 
+  const handleDeletePost = async () => {
+    if (!isAuthor) return;
+
+    setIsProcessing(true);
+    try {
+        const postRef = doc(db, 'posts', post.id);
+        await deleteDoc(postRef);
+
+        // Decrement user's post count
+        const userRef = doc(db, 'users', post.author.id);
+        await updateDoc(userRef, { 'stats.posts': increment(-1) });
+
+        toast({ title: "Postingan dihapus." });
+        onPostDelete?.(post.id);
+    } catch (error) {
+        console.error("Error deleting post: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Gagal menghapus postingan. Silakan coba lagi."
+        })
+    } finally {
+        setIsProcessing(false);
+    }
+  }
+
 
   const profileLink = user && user.uid === post.author.id ? '/profile' : `/user?id=${post.author.id}`;
   const postDate = post.createdAt ? format(post.createdAt.toDate(), 'dd MMM yyyy', { locale: id }) : '';
 
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-      <CardHeader className="flex flex-row items-center gap-3 p-4">
+      <CardHeader className="flex flex-row items-start gap-3 p-4">
         <Link href={profileLink}>
           <Avatar>
             <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
@@ -183,6 +223,29 @@ export function PostCard({ post }: { post: Post }) {
             )}
           </div>
         </div>
+        {isAuthor && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isProcessing}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus postingan Anda secara permanen.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} className={cn(buttonVariants({variant: "destructive"}))}>
+                        Hapus
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
       </CardHeader>
       <CardContent className="px-4 pb-4">
         <p className="text-base text-foreground whitespace-pre-wrap">
@@ -222,3 +285,5 @@ export function PostCard({ post }: { post: Post }) {
     </Card>
   );
 }
+
+    

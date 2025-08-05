@@ -6,15 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from './PostCard';
 import { Separator } from './ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
-import { Camera, Loader, Menu, BadgeCheck, Lock, ArrowLeft } from 'lucide-react';
+import { Camera, Loader, Menu, BadgeCheck, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import UserListDialog from './UserListDialog';
 
@@ -28,14 +27,12 @@ function StatItem({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export default function ProfileDisplay({ user, posts }: { user: User, posts: Post[] }) {
+export default function ProfileDisplay({ user, posts, onPostDelete }: { user: User, posts: Post[], onPostDelete?: (postId: string) => void }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(user);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const router = useRouter();
-
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
     setCurrentUser(prevUser => ({...prevUser, ...updatedUser}));
@@ -97,7 +94,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
   
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-      <div className="flex justify-between items-center mb-4 h-10">
+       <div className="flex justify-between items-center mb-4 h-10">
         <div className="flex items-center gap-2">
             {currentUser.isPrivate && <Lock className="h-5 w-5 text-muted-foreground" />}
             <h2 className="text-xl font-bold">@{currentUser.handle}</h2>
@@ -134,7 +131,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
           />
         </div>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Postingan" value={posts.length} />
+          <StatItem label="Postingan" value={currentUser.stats.posts} />
           <UserListDialog userIds={currentUser.followers || []} title="Pengikut">
             <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{currentUser.stats.followers}</p>
@@ -162,8 +159,8 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
           </DialogTrigger>
           <DialogContent className="p-0 flex flex-col">
             <DialogHeader className="p-4 border-b">
-                <DialogTitle className="text-lg font-semibold text-center">Ubah Profil</DialogTitle>
-                <DialogTitle className="sr-only">Ubah Profil</DialogTitle>
+              <DialogTitle className="text-lg font-semibold text-center">Ubah Profil</DialogTitle>
+              <DialogTitle className="sr-only">Ubah Profil</DialogTitle>
             </DialogHeader>
             <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />
           </DialogContent>
@@ -176,7 +173,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
         <h2 className="text-xl font-bold font-headline mb-4 text-center">Postingan</h2>
         <div className="space-y-6">
           {posts.length > 0 ? (
-            posts.map(post => <PostCard key={post.id} post={post} />)
+            posts.map(post => <PostCard key={post.id} post={post} onPostDelete={onPostDelete} />)
           ) : (
             <p className="text-center text-muted-foreground py-8">Belum ada postingan.</p>
           )}
@@ -185,3 +182,5 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
     </div>
   );
 }
+
+    

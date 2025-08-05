@@ -51,6 +51,10 @@ export default function LikesPage() {
     fetchLikedPosts();
   }, [user, authIsLoading]);
 
+  const handlePostDelete = (postId: string) => {
+    setLikedPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+  };
+
   const PostSkeleton = () => (
      <div className="space-y-3">
         <div className="flex items-center space-x-4">
@@ -88,7 +92,7 @@ export default function LikesPage() {
       ) : likedPosts.length > 0 ? (
         <div className="space-y-6">
           {likedPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />
           ))}
         </div>
       ) : (
@@ -101,3 +105,5 @@ export default function LikesPage() {
     </div>
   );
 }
+
+    

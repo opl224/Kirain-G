@@ -61,6 +61,10 @@ export default function HomePage() {
 
   const storyAuthors = Object.values(groupedStories).map(storyList => storyList[0].author);
 
+  const handlePostDelete = (postId: string) => {
+    setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+  };
+
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
         {isLoading || storyAuthors.length > 0 ? (
@@ -79,10 +83,12 @@ export default function HomePage() {
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />
           ))}
         </div>
       )}
     </div>
   );
 }
+
+    

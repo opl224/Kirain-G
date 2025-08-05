@@ -52,6 +52,21 @@ export default function ProfilePage() {
     fetchData();
   }, [authUser, authIsLoading]);
 
+  const handlePostDelete = (postId: string) => {
+    setUserPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+    // Also update profile post count
+    setUserProfile(prevProfile => {
+        if (!prevProfile) return null;
+        return {
+            ...prevProfile,
+            stats: {
+                ...prevProfile.stats,
+                posts: prevProfile.stats.posts - 1,
+            }
+        }
+    })
+  };
+
   if (isLoading || authIsLoading || !userProfile) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -61,6 +76,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <ProfileDisplay user={userProfile} posts={userPosts} />
+    <ProfileDisplay user={userProfile} posts={userPosts} onPostDelete={handlePostDelete} />
   );
 }
+
+    

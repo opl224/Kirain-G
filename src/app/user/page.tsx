@@ -31,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import TruncatedText from '@/components/TruncatedText';
 import UserListDialog from '@/components/UserListDialog';
 import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 
 function StatItem({ label, value, isDisabled = false }: { label: string; value: number | string, isDisabled?: boolean }) {
   return (
@@ -225,6 +226,10 @@ export default function UserProfilePage() {
       return { text: "Ikuti", variant: "default" as const };
   }
 
+  const handlePostDelete = (postId: string) => {
+    setUserPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+  };
+
   if (isLoading || authIsLoading || !userProfile) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -294,7 +299,7 @@ export default function UserProfilePage() {
         {canViewProfile ? (
             <div className="space-y-6">
             {userPosts.length > 0 ? (
-                userPosts.map((post) => <PostCard key={post.id} post={post} />)
+                userPosts.map((post) => <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />)
             ) : (
                 <p className="text-center text-muted-foreground py-8">
                 Belum ada postingan.
@@ -312,3 +317,5 @@ export default function UserProfilePage() {
     </div>
   );
 }
+
+    

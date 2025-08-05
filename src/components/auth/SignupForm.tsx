@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -72,6 +72,7 @@ export default function SignupForm() {
         },
         followers: [],
         following: [],
+        createdAt: serverTimestamp(),
       });
 
       toast({
@@ -169,3 +170,5 @@ export default function SignupForm() {
     </Card>
   );
 }
+
+    

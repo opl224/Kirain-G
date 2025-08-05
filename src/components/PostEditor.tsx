@@ -25,7 +25,7 @@ import { Card, CardContent } from './ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
 import { supabase } from '@/lib/supabase';
-import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
 import { Switch } from './ui/switch';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
@@ -169,6 +169,8 @@ export default function PostEditor() {
           comments: 0,
           createdAt: serverTimestamp(),
         });
+        // Increment user's post count
+        await updateDoc(userDocRef, { 'stats.posts': increment(1) });
         toast({ title: 'Postingan Diposting!', description: 'Postingan baru Anda sekarang dapat dilihat oleh orang lain.' });
       } else if (postType === 'story' && mediaFile) {
         // Upload to Supabase Storage
@@ -347,3 +349,5 @@ export default function PostEditor() {
     </Card>
   );
 }
+
+    

@@ -18,6 +18,7 @@ export interface User {
   following?: string[]; // Array of user IDs
   savedPosts?: string[]; // Array of post IDs
   followRequests?: string[]; // Array of user IDs who have requested to follow
+  createdAt?: Timestamp;
 }
 
 export interface Post {
@@ -68,3 +69,5 @@ export interface Notification {
   read: boolean;
   relatedPostId?: string; // Optional: for 'like' notifications
 }
+
+    

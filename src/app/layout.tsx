@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import MainLayout from '@/components/layout/MainLayout';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'NotaSphere',
@@ -14,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -28,8 +29,15 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased h-full bg-background">
-        <MainLayout>{children}</MainLayout>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <MainLayout>{children}</MainLayout>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

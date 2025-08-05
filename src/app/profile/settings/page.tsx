@@ -15,9 +15,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ChevronRight, ArrowLeft, ShieldCheck, Moon } from 'lucide-react';
 import Link from 'next/link';
 import PageLoader from '@/components/PageLoader';
+import { DarkModeSwitch } from '@/components/DarkModeSwitch';
 
 export default function SettingsPage() {
   const { user: authUser, isLoading: authIsLoading } = useAuth();
@@ -155,6 +156,23 @@ export default function SettingsPage() {
       </div>
       
       <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tampilan</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <SettingItem>
+              <div className="flex items-center gap-3">
+                <Moon className="w-5 h-5 text-primary" />
+                <Label htmlFor="dark-mode-switch" className="text-base">
+                  Mode Gelap
+                </Label>
+              </div>
+              <DarkModeSwitch />
+            </SettingItem>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Konten</CardTitle>

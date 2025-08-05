@@ -44,11 +44,9 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="flex-grow flex flex-col overflow-y-auto">
-        {children}
-      </div>
+      {children}
        {!hideCloseButton && (
-        <DialogPrimitive.Close className="absolute left-4 top-4 rounded-full h-9 w-9 flex items-center justify-center opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <DialogPrimitive.Close className="absolute left-4 top-4 rounded-full h-9 w-9 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:hidden">
           <ArrowLeft className="h-6 w-6" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

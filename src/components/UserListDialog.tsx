@@ -125,11 +125,17 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
-      <DialogContent className="p-0">
-        <DialogHeader className="pt-12 px-4 pb-4 border-b">
-            <DialogTitle>{title}</DialogTitle>
+      <DialogContent className="p-0 flex flex-col">
+         <DialogHeader className="flex flex-row items-center gap-4 p-4 border-b">
+            <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                    <ArrowLeft className="h-6 w-6" />
+                    <span className="sr-only">Kembali</span>
+                </Button>
+            </DialogClose>
+            <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[80vh]">
+        <ScrollArea className="h-full">
             <div className="p-2">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <UserRowSkeleton key={i} />)

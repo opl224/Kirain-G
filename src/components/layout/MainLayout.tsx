@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import BottomNav from './BottomNav';
-import { Loader } from 'lucide-react';
+import PageLoader from '../PageLoader';
 
 export default function MainLayout({
   children,
@@ -14,11 +14,7 @@ export default function MainLayout({
   const showNav = !isLoading && user;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

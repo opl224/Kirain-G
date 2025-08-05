@@ -31,7 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import TruncatedText from '@/components/TruncatedText';
 import UserListDialog from '@/components/UserListDialog';
 import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import PageLoader from '@/components/PageLoader';
 
 function StatItem({ label, value, isDisabled = false }: { label: string; value: number | string, isDisabled?: boolean }) {
   return (
@@ -231,11 +231,7 @@ export default function UserProfilePage() {
   };
 
   if (isLoading || authIsLoading || !userProfile) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
   
   const { text: buttonText, variant: buttonVariant } = getButtonState();

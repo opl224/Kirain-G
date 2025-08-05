@@ -15,8 +15,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Loader, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ChevronRight, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import PageLoader from '@/components/PageLoader';
 
 export default function SettingsPage() {
   const { user: authUser, isLoading: authIsLoading } = useAuth();
@@ -117,11 +118,7 @@ export default function SettingsPage() {
 
 
   if (isLoading || authIsLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!currentUser) {

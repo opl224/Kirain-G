@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
 import ProfileDisplay from '@/components/ProfileDisplay';
-import { Loader } from 'lucide-react';
+import PageLoader from '@/components/PageLoader';
 
 export default function ProfilePage() {
   const { user: authUser, isLoading: authIsLoading } = useAuth();
@@ -68,11 +68,7 @@ export default function ProfilePage() {
   };
 
   if (isLoading || authIsLoading || !userProfile) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

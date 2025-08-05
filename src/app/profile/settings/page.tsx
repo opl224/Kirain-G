@@ -148,31 +148,17 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-       <div className="flex items-center gap-2 mb-8">
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <h1 className="text-2xl font-bold font-headline">Pengaturan</h1>
+       <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <h1 className="text-2xl font-bold font-headline">Pengaturan</h1>
+        </div>
+        <DarkModeSwitch />
       </div>
       
       <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tampilan</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <SettingItem>
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-primary" />
-                <Label htmlFor="dark-mode-switch" className="text-base">
-                  Mode Gelap
-                </Label>
-              </div>
-              <DarkModeSwitch />
-            </SettingItem>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Konten</CardTitle>

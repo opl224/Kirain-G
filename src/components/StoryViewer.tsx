@@ -4,31 +4,53 @@
 import { Story } from '@/lib/types';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Progress } from './ui/progress';
-import { X, Volume2, VolumeX } from 'lucide-react';
+import { X, Volume2, VolumeX, Trash2, Loader } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useAuth } from '@/hooks/useAuth';
+import { db, supabase } from '@/lib/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from './ui/button';
+import { cn } from '@/lib/utils';
 
 interface StoryViewerProps {
     stories: Story[];
     onClose: () => void;
+    onStoryDelete?: (storyId: string, authorId: string) => void;
 }
 
 const STORY_DURATION = 5000; // 5 seconds for images
 
-export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
+export default function StoryViewer({ stories, onClose, onStoryDelete }: StoryViewerProps) {
     const [storyIndex, setStoryIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     const [isMuted, setIsMuted] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const { user: authUser } = useAuth();
+    const { toast } = useToast();
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const requestRef = useRef<number>();
 
-
     const currentStory = stories[storyIndex];
+    const isAuthor = authUser?.uid === currentStory?.author.id;
 
     const goToNextStory = useCallback(() => {
         if (storyIndex < stories.length - 1) {
@@ -42,7 +64,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
 
-     // Reset progress only when story index changes
     useEffect(() => {
         setProgress(0);
         if (videoRef.current) {
@@ -52,7 +73,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
 
     const startTimer = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
-        if (isPaused || !currentStory) return;
+        if (isPaused || !currentStory || isDeleting) return;
 
         if (currentStory.mediaType === 'video' && videoRef.current) {
             const video = videoRef.current;
@@ -85,8 +106,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             let start = Date.now() - (progress / 100) * STORY_DURATION;
 
             const tick = () => {
-                if (isPaused) {
-                    // When unpausing, we need to reset the start time
+                if (isPaused || isDeleting) {
                     start = Date.now() - (progress / 100) * STORY_DURATION;
                     requestRef.current = requestAnimationFrame(tick);
                     return;
@@ -105,7 +125,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             };
             requestRef.current = requestAnimationFrame(tick);
         }
-    }, [currentStory, isPaused, goToNextStory, progress]);
+    }, [currentStory, isPaused, goToNextStory, progress, isDeleting]);
 
 
     useEffect(() => {
@@ -124,7 +144,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     useEffect(() => {
         const video = videoRef.current;
         if (video) {
-            if (isPaused) {
+            if (isPaused || isDeleting) {
                 video.pause();
             } else {
                  const playPromise = video.play();
@@ -137,7 +157,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                 }
             }
         }
-    }, [isPaused]);
+    }, [isPaused, isDeleting]);
 
     const toggleMute = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -146,10 +166,36 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             videoRef.current.muted = !isMuted;
         }
     };
+    
+    const handleDeleteStory = async () => {
+        if (!isAuthor || !currentStory) return;
+        
+        setIsDeleting(true);
+        try {
+            // Delete from Firestore
+            const storyRef = doc(db, 'stories', currentStory.id);
+            await deleteDoc(storyRef);
+            
+            // Delete from Supabase Storage
+            const filePath = new URL(currentStory.mediaUrl).pathname.split('/stories/').pop();
+            if (filePath) {
+                 const { error: storageError } = await supabase.storage.from('stories').remove([filePath]);
+                 if (storageError) throw new Error(`Gagal menghapus media: ${storageError.message}`);
+            }
+
+            toast({ title: "Cerita dihapus." });
+            onStoryDelete?.(currentStory.id, currentStory.author.id);
+            goToNextStory();
+
+        } catch (error: any) {
+             toast({ variant: 'destructive', title: 'Gagal menghapus cerita', description: error.message });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const handleInteractionStart = () => setIsPaused(true);
     const handleInteractionEnd = () => {
-        // Use a small timeout to distinguish between a tap and a hold
         setTimeout(() => setIsPaused(false), 100);
     }
     
@@ -219,13 +265,36 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                         <p className="font-semibold text-white text-sm">{currentStory.author.handle}</p>
                         <p className="text-xs text-neutral-300">{timeAgo}</p>
                     </Link>
-                     <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-4 text-white">
+                        {isAuthor && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <button disabled={isDeleting} className="z-30">
+                                        {isDeleting ? <Loader className="w-6 h-6 animate-spin" /> : <Trash2 className="w-6 h-6" />}
+                                    </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus cerita Anda secara permanen.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteStory} className={cn(buttonVariants({variant: "destructive"}))}>
+                                        Hapus
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                         {currentStory.mediaType === 'video' && (
-                            <button onClick={toggleMute} className="text-white z-30">
+                            <button onClick={toggleMute} className="z-30">
                                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                             </button>
                         )}
-                        <button onClick={onClose} className="text-white z-30">
+                        <button onClick={onClose} className="z-30">
                             <X className="w-6 h-6" />
                         </button>
                     </div>

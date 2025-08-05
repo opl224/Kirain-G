@@ -38,7 +38,8 @@ const StoryBubbleSkeleton = () => (
   </div>
 );
 
-export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps) {
+export default function StoryTray({ groupedStories: initialGroupedStories, isLoading }: StoryTrayProps) {
+  const [groupedStories, setGroupedStories] = useState(initialGroupedStories);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [viewedAuthors, setViewedAuthors] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') {
@@ -47,6 +48,10 @@ export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps)
     const savedViewed = localStorage.getItem('viewedStoryAuthors');
     return savedViewed ? new Set(JSON.parse(savedViewed)) : new Set();
   });
+
+  useEffect(() => {
+    setGroupedStories(initialGroupedStories);
+  }, [initialGroupedStories]);
 
   useEffect(() => {
     localStorage.setItem('viewedStoryAuthors', JSON.stringify(Array.from(viewedAuthors)));
@@ -58,10 +63,25 @@ export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps)
   };
 
   const closeViewer = () => {
-    if (selectedAuthorId) {
+    if (selectedAuthorId && groupedStories[selectedAuthorId]?.every(story => viewedAuthors.has(story.author.id))) {
         setViewedAuthors(prev => new Set(prev).add(selectedAuthorId));
     }
     setSelectedAuthorId(null);
+  };
+  
+  const handleStoryDelete = (storyId: string, authorId: string) => {
+    setGroupedStories(prev => {
+        const newStories = { ...prev };
+        const authorStories = newStories[authorId]?.filter(s => s.id !== storyId);
+        
+        if (authorStories && authorStories.length > 0) {
+            newStories[authorId] = authorStories;
+        } else {
+            delete newStories[authorId];
+            closeViewer(); // Close viewer if no stories left
+        }
+        return newStories;
+    });
   };
   
   const storiesForSelectedUser = selectedAuthorId ? groupedStories[selectedAuthorId] : [];
@@ -91,7 +111,13 @@ export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps)
             hideCloseButton={true}
         >
             <DialogTitle className="sr-only">Penampil Cerita</DialogTitle>
-            {storiesForSelectedUser.length > 0 && <StoryViewer stories={storiesForSelectedUser} onClose={closeViewer} />}
+            {storiesForSelectedUser.length > 0 && 
+                <StoryViewer 
+                    stories={storiesForSelectedUser} 
+                    onClose={closeViewer} 
+                    onStoryDelete={handleStoryDelete}
+                />
+            }
         </DialogContent>
       </Dialog>
     </>

@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.notasphere.app',
-  appName: 'NotaSphere',
+  appId: 'com.kiraing.app',
+  appName: 'Kirain\'G',
   webDir: 'out',
   server: {
     androidScheme: 'https',

@@ -5,7 +5,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'NotaSphere',
+  title: 'Kirain\'G',
   description: 'A modern social web app for sharing notes and thoughts.',
 };
 

@@ -1,12 +1,11 @@
-# NotaSphere
+# Kirain'G
 
-NotaSphere is a modern, minimalist social web application designed for sharing thoughts and notes. It features a clean, content-focused interface and is built with Capacitor for native mobile app deployment on iOS and Android.
+Kirain'G is a modern, minimalist social web application designed for sharing thoughts and notes. It features a clean, content-focused interface and is built with Capacitor for native mobile app deployment on iOS and Android.
 
 ## Core Features
 
 - **Home Feed**: Browse a feed of text posts from other users in a clean, minimalist card format.
 - **Post Editor**: A simple, notepad-like editor to create and share your own notes.
-- **Smart Tag Suggestions**: Leverage AI to get relevant tag suggestions for your posts, improving discoverability.
 - **Notifications**: Stay updated with notifications for follows and likes.
 - **Unique Profile Page**: A visually distinct profile section that blends 3D isometric and modern flat design aesthetics.
 - **Mobile Ready**: Built with Capacitor, the app can be compiled into native iOS and Android applications.

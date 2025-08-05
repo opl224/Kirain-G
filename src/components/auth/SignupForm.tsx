@@ -77,7 +77,7 @@ export default function SignupForm() {
 
       toast({
         title: 'Akun Dibuat',
-        description: "Selamat datang di NotaSphere!",
+        description: "Selamat datang di Kirain'G!",
       });
       router.push('/');
     } catch (error: any) {

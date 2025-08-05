@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from './PostCard';
 import { Separator } from './ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
@@ -161,6 +161,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
             <Button className="w-full">Ubah Profil</Button>
           </DialogTrigger>
           <DialogContent className="p-0">
+             <DialogTitle className="sr-only">Ubah Profil</DialogTitle>
              <div className="flex items-center p-4 border-b">
                 <DialogClose asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">

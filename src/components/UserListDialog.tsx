@@ -126,6 +126,7 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
       <DialogContent className="p-0">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         <div className="flex items-center p-4 border-b">
             <DialogClose asChild>
                 <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
@@ -134,7 +135,7 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
             </DialogClose>
             <h2 className="text-lg font-semibold ml-4">{title}</h2>
         </div>
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-[80vh]">
             <div className="p-2">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <UserRowSkeleton key={i} />)

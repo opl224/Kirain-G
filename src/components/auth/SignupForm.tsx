@@ -64,6 +64,7 @@ export default function SignupForm() {
         email: values.email,
         avatarUrl: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}`,
         bio: '',
+        isPrivate: false,
         stats: {
           posts: 0,
           followers: 0,
@@ -162,3 +163,5 @@ export default function SignupForm() {
     </Card>
   );
 }
+
+    

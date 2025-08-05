@@ -7,6 +7,7 @@ export interface User {
   handle: string;
   avatarUrl: string;
   bio: string;
+  isPrivate?: boolean;
   stats: {
     posts: number;
     followers: number;
@@ -36,3 +37,5 @@ export interface Notification {
   content: string;
   createdAt: Timestamp;
 }
+
+    

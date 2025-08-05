@@ -171,12 +171,12 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       <Separator className="my-8"/>
 
       <div>
-        <h2 className="text-xl font-bold font-headline mb-4 text-center">Catatan</h2>
+        <h2 className="text-xl font-bold font-headline mb-4 text-center">Postingan</h2>
         <div className="space-y-6">
           {posts.length > 0 ? (
             posts.map(post => <PostCard key={post.id} post={post} />)
           ) : (
-            <p className="text-center text-muted-foreground py-8">Belum ada catatan.</p>
+            <p className="text-center text-muted-foreground py-8">Belum ada postingan.</p>
           )}
         </div>
       </div>

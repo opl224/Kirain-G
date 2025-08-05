@@ -250,7 +250,7 @@ export default function UserProfilePage() {
 
       <div>
         <h2 className="text-xl font-bold font-headline mb-4 text-center">
-          Catatan
+          Postingan
         </h2>
         {canViewProfile ? (
             <div className="space-y-6">
@@ -258,7 +258,7 @@ export default function UserProfilePage() {
                 userPosts.map((post) => <PostCard key={post.id} post={post} />)
             ) : (
                 <p className="text-center text-muted-foreground py-8">
-                Belum ada catatan.
+                Belum ada postingan.
                 </p>
             )}
             </div>
@@ -266,7 +266,7 @@ export default function UserProfilePage() {
             <div className="text-center py-10 border rounded-lg bg-muted/50">
                 <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-semibold">Akun ini Privat</h3>
-                <p className="mt-1 text-muted-foreground">Ikuti untuk melihat catatan mereka.</p>
+                <p className="mt-1 text-muted-foreground">Ikuti untuk melihat postingan mereka.</p>
             </div>
         )}
       </div>

@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 const formSchema = z.object({
   content: z
     .string()
-    .max(500, { message: 'Catatan Anda tidak boleh lebih dari 500 karakter.' })
+    .max(500, { message: 'Postingan Anda tidak boleh lebih dari 500 karakter.' })
     .optional(),
 });
 
@@ -132,7 +132,7 @@ export default function PostEditor() {
     }
 
     if (postType === 'note' && (!values.content || values.content.length < 3)) {
-        toast({ variant: 'destructive', title: 'Konten terlalu pendek', description: 'Catatan Anda harus setidaknya 3 karakter.' });
+        toast({ variant: 'destructive', title: 'Konten terlalu pendek', description: 'Postingan Anda harus setidaknya 3 karakter.' });
         return;
     }
 
@@ -169,7 +169,7 @@ export default function PostEditor() {
           comments: 0,
           createdAt: serverTimestamp(),
         });
-        toast({ title: 'Catatan Diposting!', description: 'Catatan baru Anda sekarang dapat dilihat oleh orang lain.' });
+        toast({ title: 'Postingan Diposting!', description: 'Postingan baru Anda sekarang dapat dilihat oleh orang lain.' });
       } else if (postType === 'story' && mediaFile) {
         // Upload to Supabase Storage
         const fileExtension = mediaFile.name.split('.').pop();
@@ -232,7 +232,7 @@ export default function PostEditor() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             
             <div className="flex items-center space-x-2">
-              <FormLabel htmlFor="post-type">Catatan</FormLabel>
+              <FormLabel htmlFor="post-type">Postingan</FormLabel>
               <Switch
                 id="post-type"
                 checked={postType === 'story'}
@@ -248,7 +248,7 @@ export default function PostEditor() {
                   name="content"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Catatan Anda</FormLabel>
+                      <FormLabel>Postingan Anda</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Bagikan pemikiran Anda dengan dunia..."
@@ -339,7 +339,7 @@ export default function PostEditor() {
 
             <Button type="submit" disabled={isLoading || (postType === 'story' && !!mediaError)} className="w-full">
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {postType === 'note' ? 'Posting Catatan' : 'Posting Cerita'}
+              {postType === 'note' ? 'Posting Postingan' : 'Posting Cerita'}
             </Button>
           </form>
         </Form>

@@ -73,7 +73,7 @@ export default function HomePage() {
           </div>
         ) : null}
 
-        <h1 className="text-2xl font-bold font-headline mb-4">Umpan</h1>
+        <h1 className="text-2xl font-bold font-headline mb-4">Postingan</h1>
       {isLoading ? (
          <p className="text-center text-muted-foreground">Memuat postingan...</p>
       ) : (

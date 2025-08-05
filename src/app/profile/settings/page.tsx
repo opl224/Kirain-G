@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
-import { doc, updateDoc, setDoc, collection, getDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import type { User } from '@/lib/types';
 
@@ -81,14 +81,20 @@ export default function SettingsPage() {
   const handleVerificationRequest = async () => {
     if (!currentUser) return;
     try {
+      // Fetch the full current user data if it's not complete
+      const userDocRef = doc(db, 'users', currentUser.id);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) throw new Error("User data not found");
+      const senderData = userDocSnap.data() as User;
+
       // Create a notification for the super user
       await addDoc(collection(db, "notifications"), {
         recipientId: superUserId,
         sender: {
           id: currentUser.id,
-          name: currentUser.name,
-          handle: currentUser.handle,
-          avatarUrl: currentUser.avatarUrl,
+          name: senderData.name,
+          handle: senderData.handle,
+          avatarUrl: senderData.avatarUrl,
         },
         type: 'verification_request',
         content: `meminta verifikasi akun.`,
@@ -176,7 +182,7 @@ export default function SettingsPage() {
                   onCheckedChange={handlePrivacyChange}
                 />
              </SettingItem>
-             {!isSuperUser && (
+             {!currentUser.isVerified && !isSuperUser && (
                 <>
                     <Separator/>
                     <SettingItem>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -9,18 +10,22 @@ const navItems = [
   {
     href: '/',
     icon: 'home',
+    label: 'Home',
   },
   {
     href: '/post',
     icon: 'add',
+    label: 'Post',
   },
   {
     href: '/notifications',
     icon: 'bell',
+    label: 'Notifications',
   },
   {
     href: '/profile',
     icon: 'profile',
+    label: 'Profile',
   },
 ];
 
@@ -56,7 +61,8 @@ export default function BottomNav() {
                       className="transition-transform duration-200"
                     />
                   </div>
-                  <span className="text-xs">{item.label}</span>
+                  {/* The text label is hidden for a cleaner look, but can be re-enabled by removing sr-only */}
+                  <span className="text-xs sr-only">{item.label}</span>
                 </Link>
               </li>
             );

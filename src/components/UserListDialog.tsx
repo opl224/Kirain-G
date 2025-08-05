@@ -23,6 +23,7 @@ interface UserListDialogProps {
   userIds: string[];
   title: string;
   children: React.ReactNode; // The trigger
+  disabled?: boolean;
 }
 
 function UserRow({ user, onDialogClose }: { user: User, onDialogClose: () => void }) {
@@ -60,12 +61,12 @@ function UserRowSkeleton() {
     )
 }
 
-export default function UserListDialog({ userIds, title, children }: UserListDialogProps) {
+export default function UserListDialog({ userIds, title, children, disabled = false }: UserListDialogProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const canOpen = userIds && userIds.length > 0;
+  const canOpen = userIds && userIds.length > 0 && !disabled;
 
   useEffect(() => {
     if (!isOpen || !canOpen) {
@@ -105,7 +106,11 @@ export default function UserListDialog({ userIds, title, children }: UserListDia
     fetchUsers();
   }, [isOpen, userIds, canOpen]);
 
-  const handleDialogOpen = () => {
+  const handleDialogOpen = (e: React.MouseEvent) => {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
     if (canOpen) {
         setIsOpen(true);
     }

@@ -21,7 +21,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
-import { ArrowLeft, Loader, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, Loader, BadgeCheck, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -30,9 +30,9 @@ import { Separator } from '@/components/ui/separator';
 import TruncatedText from '@/components/TruncatedText';
 import UserListDialog from '@/components/UserListDialog';
 
-function StatItem({ label, value }: { label: string; value: number | string }) {
+function StatItem({ label, value, isDisabled = false }: { label: string; value: number | string, isDisabled?: boolean }) {
   return (
-    <div className="text-center">
+    <div className={cn("text-center", isDisabled && "cursor-not-allowed opacity-50")}>
       <p className="text-lg font-bold">{value}</p>
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
@@ -52,6 +52,8 @@ export default function UserProfilePage() {
   const [followIsLoading, setFollowIsLoading] = useState(false);
 
   const { toast } = useToast();
+  
+  const canViewProfile = userProfile && (!userProfile.isPrivate || isFollowing);
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -75,27 +77,28 @@ export default function UserProfilePage() {
         if (userDocSnap.exists()) {
           const profileData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
           setUserProfile(profileData);
-          if (authUser && profileData.followers?.includes(authUser.uid)) {
-            setIsFollowing(true);
+          const localIsFollowing = authUser && profileData.followers?.includes(authUser.uid);
+          setIsFollowing(!!localIsFollowing);
+
+          // Fetch user posts only if profile is not private or user is a follower
+          if (!profileData.isPrivate || localIsFollowing) {
+            const postsCollection = collection(db, 'posts');
+            const q = query(
+              postsCollection,
+              where('author.id', '==', userId),
+              orderBy('createdAt', 'desc')
+            );
+            const postSnapshot = await getDocs(q);
+            const postsData = postSnapshot.docs.map((doc) => ({
+              ...(doc.data() as Post),
+              id: doc.id,
+            }));
+            setUserPosts(postsData);
           }
         } else {
           console.log('Pengguna tidak ditemukan!');
           router.push('/'); // Or a 404 page
         }
-
-        // Fetch user posts
-        const postsCollection = collection(db, 'posts');
-        const q = query(
-          postsCollection,
-          where('author.id', '==', userId),
-          orderBy('createdAt', 'desc')
-        );
-        const postSnapshot = await getDocs(q);
-        const postsData = postSnapshot.docs.map((doc) => ({
-          ...(doc.data() as Post),
-          id: doc.id,
-        }));
-        setUserPosts(postsData);
       } catch (error) {
         console.error('Error fetching profile data: ', error);
       } finally {
@@ -212,18 +215,12 @@ export default function UserProfilePage() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Postingan" value={userPosts.length} />
-          <UserListDialog userIds={userProfile.followers || []} title="Pengikut">
-            <div className="text-center cursor-pointer">
-                <p className="text-lg font-bold">{userProfile.stats.followers}</p>
-                <p className="text-sm text-muted-foreground">Pengikut</p>
-            </div>
+          <StatItem label="Postingan" value={canViewProfile ? userPosts.length : 0} />
+          <UserListDialog userIds={userProfile.followers || []} title="Pengikut" disabled={!canViewProfile}>
+            <StatItem label="Pengikut" value={userProfile.stats.followers} isDisabled={!canViewProfile} />
           </UserListDialog>
-          <UserListDialog userIds={userProfile.following || []} title="Mengikuti">
-             <div className="text-center cursor-pointer">
-                <p className="text-lg font-bold">{userProfile.stats.following}</p>
-                <p className="text-sm text-muted-foreground">Mengikuti</p>
-            </div>
+          <UserListDialog userIds={userProfile.following || []} title="Mengikuti" disabled={!canViewProfile}>
+             <StatItem label="Mengikuti" value={userProfile.stats.following} isDisabled={!canViewProfile} />
           </UserListDialog>
         </div>
       </div>
@@ -253,15 +250,23 @@ export default function UserProfilePage() {
         <h2 className="text-xl font-bold font-headline mb-4 text-center">
           Catatan
         </h2>
-        <div className="space-y-6">
-          {userPosts.length > 0 ? (
-            userPosts.map((post) => <PostCard key={post.id} post={post} />)
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              Belum ada catatan.
-            </p>
-          )}
-        </div>
+        {canViewProfile ? (
+            <div className="space-y-6">
+            {userPosts.length > 0 ? (
+                userPosts.map((post) => <PostCard key={post.id} post={post} />)
+            ) : (
+                <p className="text-center text-muted-foreground py-8">
+                Belum ada catatan.
+                </p>
+            )}
+            </div>
+        ) : (
+            <div className="text-center py-10 border rounded-lg bg-muted/50">
+                <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">Akun ini Privat</h3>
+                <p className="mt-1 text-muted-foreground">Ikuti untuk melihat catatan mereka.</p>
+            </div>
+        )}
       </div>
     </div>
   );

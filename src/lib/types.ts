@@ -14,9 +14,9 @@ export interface User {
     followers: number;
     following: number;
   };
-  // Add followers and following arrays to track relationships
   followers?: string[]; // Array of user IDs
   following?: string[]; // Array of user IDs
+  savedPosts?: string[]; // Array of post IDs
 }
 
 export interface Post {
@@ -30,7 +30,8 @@ export interface Post {
   }
   content: string;
   tags?: string[];
-  likes: number;
+  likes: number; // This will be the count of likedBy
+  likedBy?: string[]; // Array of user IDs who liked the post
   comments: number;
   createdAt: Timestamp;
 }

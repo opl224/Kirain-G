@@ -19,6 +19,7 @@ import {
   increment,
   addDoc,
   serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
 import { ArrowLeft, Loader, BadgeCheck, Lock } from 'lucide-react';
@@ -50,6 +51,7 @@ export default function UserProfilePage() {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [hasRequested, setHasRequested] = useState(false);
   const [followIsLoading, setFollowIsLoading] = useState(false);
 
   const { toast } = useToast();
@@ -78,11 +80,16 @@ export default function UserProfilePage() {
         if (userDocSnap.exists()) {
           const profileData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
           setUserProfile(profileData);
-          const localIsFollowing = authUser && profileData.followers?.includes(authUser.uid);
-          setIsFollowing(!!localIsFollowing);
+          if (authUser) {
+            const localIsFollowing = profileData.followers?.includes(authUser.uid);
+            const localHasRequested = profileData.followRequests?.includes(authUser.uid);
+            setIsFollowing(!!localIsFollowing);
+            setHasRequested(!!localHasRequested);
+          }
+          
 
           // Fetch user posts only if profile is not private or user is a follower
-          if (!profileData.isPrivate || localIsFollowing) {
+          if (!profileData.isPrivate || (authUser && profileData.followers?.includes(authUser.uid))) {
             const postsCollection = collection(db, 'posts');
             const q = query(
               postsCollection,
@@ -109,6 +116,20 @@ export default function UserProfilePage() {
 
     fetchData();
   }, [userId, authIsLoading, authUser, router]);
+  
+  const findNotification = async (type: string) => {
+      if (!authUser || !userProfile) return null;
+      const notifQuery = query(collection(db, "notifications"),
+          where("type", "==", type),
+          where("sender.id", "==", authUser.uid),
+          where("recipientId", "==", userProfile.id));
+      const notifSnapshot = await getDocs(notifQuery);
+      if (!notifSnapshot.empty) {
+          return notifSnapshot.docs[0].ref;
+      }
+      return null;
+  };
+
 
   const handleFollowToggle = async () => {
     if (!authUser) {
@@ -127,55 +148,65 @@ export default function UserProfilePage() {
 
     try {
       if (isFollowing) {
-        // Unfollow
-        await updateDoc(currentUserRef, {
-          following: arrayRemove(userProfile.id),
-        });
-        await updateDoc(targetUserRef, {
-          followers: arrayRemove(authUser.uid),
-          'stats.followers': increment(-1),
-        });
-         await updateDoc(currentUserRef, {
-          'stats.following': increment(-1),
-        });
-        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}, followers: p.followers?.filter(id => id !== authUser.uid)} : null);
-        toast({ title: `Anda berhenti mengikuti @${userProfile.handle}` });
-      } else {
-        // Follow
-        await updateDoc(currentUserRef, {
-          following: arrayUnion(userProfile.id),
-        });
-        await updateDoc(targetUserRef, {
-          followers: arrayUnion(authUser.uid),
-          'stats.followers': increment(1),
-        });
-        await updateDoc(currentUserRef, {
-          'stats.following': increment(1),
-        });
+        // --- UNFOLLOW LOGIC ---
+        await updateDoc(currentUserRef, { following: arrayRemove(userProfile.id) });
+        await updateDoc(targetUserRef, { followers: arrayRemove(authUser.uid), 'stats.followers': increment(-1) });
+        await updateDoc(currentUserRef, { 'stats.following': increment(-1) });
         
-         // Create a notification for the followed user
+        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}, followers: p.followers?.filter(id => id !== authUser.uid)} : null);
+        setIsFollowing(false);
+        toast({ title: `Anda berhenti mengikuti @${userProfile.handle}` });
+      
+      } else if (hasRequested) {
+        // --- CANCEL FOLLOW REQUEST LOGIC ---
+        await updateDoc(targetUserRef, { followRequests: arrayRemove(authUser.uid) });
+        const notifRef = await findNotification('follow_request');
+        if (notifRef) await deleteDoc(notifRef);
+
+        setHasRequested(false);
+        toast({ title: "Permintaan pertemanan dibatalkan." });
+      
+      } else if (userProfile.isPrivate) {
+        // --- SEND FOLLOW REQUEST LOGIC ---
+        await updateDoc(targetUserRef, { followRequests: arrayUnion(authUser.uid) });
+
         const authUserDoc = await getDoc(currentUserRef);
         const authUserData = authUserDoc.data() as User;
         
         await addDoc(collection(db, "notifications"), {
             recipientId: userProfile.id,
-            sender: {
-                id: authUser.uid,
-                name: authUserData.name,
-                handle: authUserData.handle,
-                avatarUrl: authUserData.avatarUrl,
-            },
+            sender: { id: authUser.uid, name: authUserData.name, handle: authUserData.handle, avatarUrl: authUserData.avatarUrl },
+            type: 'follow_request',
+            content: `ingin mengikuti Anda.`,
+            read: false,
+            createdAt: serverTimestamp(),
+        });
+        
+        setHasRequested(true);
+        toast({ title: "Permintaan pertemanan terkirim." });
+
+      } else {
+        // --- FOLLOW PUBLIC ACCOUNT LOGIC ---
+        await updateDoc(currentUserRef, { following: arrayUnion(userProfile.id) });
+        await updateDoc(targetUserRef, { followers: arrayUnion(authUser.uid), 'stats.followers': increment(1) });
+        await updateDoc(currentUserRef, { 'stats.following': increment(1) });
+        
+        const authUserDoc = await getDoc(currentUserRef);
+        const authUserData = authUserDoc.data() as User;
+        
+        await addDoc(collection(db, "notifications"), {
+            recipientId: userProfile.id,
+            sender: { id: authUser.uid, name: authUserData.name, handle: authUserData.handle, avatarUrl: authUserData.avatarUrl },
             type: 'follow',
             content: `mulai mengikuti Anda.`,
             read: false,
             createdAt: serverTimestamp(),
         });
 
-
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
+        setIsFollowing(true);
         toast({ title: `Anda sekarang mengikuti @${userProfile.handle}` });
       }
-      setIsFollowing(!isFollowing);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -187,6 +218,12 @@ export default function UserProfilePage() {
       setFollowIsLoading(false);
     }
   };
+  
+  const getButtonState = () => {
+      if (isFollowing) return { text: "Mengikuti", variant: "outline" as const };
+      if (hasRequested) return { text: "Diminta", variant: "outline" as const };
+      return { text: "Ikuti", variant: "default" as const };
+  }
 
   if (isLoading || authIsLoading || !userProfile) {
     return (
@@ -195,6 +232,8 @@ export default function UserProfilePage() {
       </div>
     );
   }
+  
+  const { text: buttonText, variant: buttonVariant } = getButtonState();
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
@@ -239,10 +278,10 @@ export default function UserProfilePage() {
           className="w-full"
           onClick={handleFollowToggle}
           disabled={followIsLoading}
-          variant={isFollowing ? 'outline' : 'default'}
+          variant={buttonVariant}
         >
           {followIsLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isFollowing ? 'Mengikuti' : 'Ikuti'}
+          {buttonText}
         </Button>
       </div>
 

@@ -17,6 +17,7 @@ export interface User {
   followers?: string[]; // Array of user IDs
   following?: string[]; // Array of user IDs
   savedPosts?: string[]; // Array of post IDs
+  followRequests?: string[]; // Array of user IDs who have requested to follow
 }
 
 export interface Post {
@@ -54,7 +55,7 @@ export interface Story {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'follow' | 'verification_request';
+  type: 'like' | 'follow' | 'verification_request' | 'follow_request';
   recipientId: string; // The user who should receive this notification
   sender: { // The user who triggered the notification
     id: string;

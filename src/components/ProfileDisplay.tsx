@@ -4,9 +4,11 @@
 import type { User, Post } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { PostCard } from './PostCard';
 import { Separator } from './ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import EditProfileForm from './EditProfileForm';
+import { useState } from 'react';
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
@@ -18,28 +20,49 @@ function StatItem({ label, value }: { label: string; value: number | string }) {
 }
 
 export default function ProfileDisplay({ user, posts }: { user: User, posts: Post[] }) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // This state will hold the potentially updated user data
+  // It's initialized with the user prop and can be updated by EditProfileForm
+  const [currentUser, setCurrentUser] = useState(user);
+
+  const handleProfileUpdate = (updatedUser: Partial<User>) => {
+    setCurrentUser(prevUser => ({...prevUser, ...updatedUser}));
+    setIsEditDialogOpen(false); // Close dialog on successful update
+  }
+
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <div className="flex items-center gap-4 md:gap-8">
         <Avatar className="w-24 h-24 border-2">
-          <AvatarImage src={user.avatarUrl} alt={user.name} />
-          <AvatarFallback className="text-3xl">{user.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
+          <AvatarFallback className="text-3xl">{currentUser.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 flex justify-around">
           <StatItem label="Posts" value={posts.length} />
-          <StatItem label="Followers" value={user.stats.followers} />
-          <StatItem label="Following" value={user.stats.following} />
+          <StatItem label="Followers" value={currentUser.stats.followers} />
+          <StatItem label="Following" value={currentUser.stats.following} />
         </div>
       </div>
 
       <div className="mt-6">
-        <h1 className="text-xl font-bold">{user.name}</h1>
-        <p className="text-muted-foreground">@{user.handle}</p>
-        {user.bio && <p className="mt-2 text-foreground/90">{user.bio}</p>}
+        <h1 className="text-xl font-bold">{currentUser.name}</h1>
+        <p className="text-muted-foreground">@{currentUser.handle}</p>
+        {currentUser.bio && <p className="mt-2 text-foreground/90">{currentUser.bio}</p>}
       </div>
       
       <div className="mt-6">
-        <Button className="w-full">Edit Profile</Button>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full">Edit Profile</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+            </DialogHeader>
+            <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Separator className="my-8"/>

@@ -5,7 +5,7 @@ import { Story } from '@/lib/types';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -16,22 +16,54 @@ interface StoryViewerProps {
 
 export default function StoryViewer({ story, onClose }: StoryViewerProps) {
     const [progress, setProgress] = useState(0);
-    const duration = story.mediaType === 'video' ? (story.duration || 15) * 1000 : 5000; // 5s for images
+    const videoRef = useRef<HTMLVideoElement>(null);
 
+    // Effect for image-based stories or as a fallback
     useEffect(() => {
-        const timer = setTimeout(() => {
-            onClose();
-        }, duration);
+        if (story.mediaType === 'image') {
+            const duration = 5000; // 5 seconds for images
+            setProgress(0); // Start from 0
+            const interval = setInterval(() => {
+                setProgress(p => p + (100 / (duration / 100)));
+            }, 100);
+            
+            const timer = setTimeout(() => {
+                onClose();
+            }, duration);
 
-        const interval = setInterval(() => {
-            setProgress(p => p + (100 / (duration / 100)));
-        }, 100);
+            return () => {
+                clearInterval(interval);
+                clearTimeout(timer);
+            };
+        }
+    }, [story, onClose]);
 
-        return () => {
-            clearTimeout(timer);
-            clearInterval(interval);
-        };
-    }, [story, duration, onClose]);
+    // Effect for video progress tracking
+    useEffect(() => {
+        const video = videoRef.current;
+        if (story.mediaType === 'video' && video) {
+            const updateProgress = () => {
+                if (video.duration > 0) {
+                    setProgress((video.currentTime / video.duration) * 100);
+                }
+            };
+            
+            const handleVideoEnd = () => {
+                onClose();
+            };
+
+            video.addEventListener('timeupdate', updateProgress);
+            video.addEventListener('ended', handleVideoEnd);
+            
+            // Start playback in case autoplay is blocked
+            video.play().catch(console.error);
+
+            return () => {
+                video.removeEventListener('timeupdate', updateProgress);
+                video.removeEventListener('ended', handleVideoEnd);
+            };
+        }
+    }, [story, onClose]);
     
     const timeAgo = story.createdAt ? formatDistanceToNow(story.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
     const profileLink = `/user?id=${story.author.id}`;
@@ -58,7 +90,7 @@ export default function StoryViewer({ story, onClose }: StoryViewerProps) {
             {story.mediaType === 'image' ? (
                 <img src={story.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${story.author.name}`} />
             ): (
-                <video src={story.mediaUrl} className="w-full h-full object-contain" autoPlay onEnded={onClose} />
+                <video ref={videoRef} src={story.mediaUrl} className="w-full h-full object-contain" autoPlay muted playsInline />
             )}
         </div>
     );

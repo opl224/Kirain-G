@@ -8,22 +8,18 @@ import Image from 'next/image';
 const navItems = [
   {
     href: '/',
-    label: 'Beranda',
     icon: 'home',
   },
   {
     href: '/post',
-    label: 'Post',
     icon: 'add',
   },
   {
     href: '/notifications',
-    label: 'Notifikasi',
     icon: 'bell',
   },
   {
     href: '/profile',
-    label: 'Profil',
     icon: 'profile',
   },
 ];

@@ -135,16 +135,16 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
         <div className="flex-1 flex justify-around">
           <StatItem label="Posts" value={posts.length} />
           <UserListDialog userIds={currentUser.followers || []} title="Followers">
-            <button className="text-center disabled:opacity-50" disabled={!currentUser.followers || currentUser.followers.length === 0}>
+            <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{currentUser.stats.followers}</p>
                 <p className="text-sm text-muted-foreground">Followers</p>
-            </button>
+            </div>
           </UserListDialog>
           <UserListDialog userIds={currentUser.following || []} title="Following">
-             <button className="text-center disabled:opacity-50" disabled={!currentUser.following || currentUser.following.length === 0}>
+             <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{currentUser.stats.following}</p>
                 <p className="text-sm text-muted-foreground">Following</p>
-            </button>
+            </div>
           </UserListDialog>
         </div>
       </div>

@@ -17,6 +17,8 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
+  addDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
 import { ArrowLeft, Loader, BadgeCheck } from 'lucide-react';
@@ -129,6 +131,9 @@ export default function UserProfilePage() {
           followers: arrayRemove(authUser.uid),
           'stats.followers': increment(-1),
         });
+         await updateDoc(currentUserRef, {
+          'stats.following': increment(-1),
+        });
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}, followers: p.followers?.filter(id => id !== authUser.uid)} : null);
         toast({ title: `You unfollowed @${userProfile.handle}` });
       } else {
@@ -140,6 +145,29 @@ export default function UserProfilePage() {
           followers: arrayUnion(authUser.uid),
           'stats.followers': increment(1),
         });
+        await updateDoc(currentUserRef, {
+          'stats.following': increment(1),
+        });
+        
+         // Create a notification for the followed user
+        const authUserDoc = await getDoc(currentUserRef);
+        const authUserData = authUserDoc.data() as User;
+        
+        await addDoc(collection(db, "notifications"), {
+            recipientId: userProfile.id,
+            sender: {
+                id: authUser.uid,
+                name: authUserData.name,
+                handle: authUserData.handle,
+                avatarUrl: authUserData.avatarUrl,
+            },
+            type: 'follow',
+            content: `started following you.`,
+            read: false,
+            createdAt: serverTimestamp(),
+        });
+
+
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
         toast({ title: `You are now following @${userProfile.handle}` });
       }
@@ -186,16 +214,16 @@ export default function UserProfilePage() {
         <div className="flex-1 flex justify-around">
           <StatItem label="Posts" value={userPosts.length} />
           <UserListDialog userIds={userProfile.followers || []} title="Followers">
-            <button className="text-center disabled:opacity-50" disabled={!userProfile.followers || userProfile.followers.length === 0}>
+            <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{userProfile.stats.followers}</p>
                 <p className="text-sm text-muted-foreground">Followers</p>
-            </button>
+            </div>
           </UserListDialog>
           <UserListDialog userIds={userProfile.following || []} title="Following">
-             <button className="text-center disabled:opacity-50" disabled={!userProfile.following || userProfile.following.length === 0}>
+             <div className="text-center cursor-pointer">
                 <p className="text-lg font-bold">{userProfile.stats.following}</p>
                 <p className="text-sm text-muted-foreground">Following</p>
-            </button>
+            </div>
           </UserListDialog>
         </div>
       </div>

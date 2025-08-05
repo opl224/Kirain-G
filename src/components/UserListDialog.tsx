@@ -65,8 +65,10 @@ export default function UserListDialog({ userIds, title, children }: UserListDia
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const canOpen = userIds && userIds.length > 0;
+
   useEffect(() => {
-    if (!isOpen || userIds.length === 0) {
+    if (!isOpen || !canOpen) {
       setUsers([]);
       return;
     };
@@ -101,7 +103,13 @@ export default function UserListDialog({ userIds, title, children }: UserListDia
     };
 
     fetchUsers();
-  }, [isOpen, userIds]);
+  }, [isOpen, userIds, canOpen]);
+
+  const handleDialogOpen = () => {
+    if (canOpen) {
+        setIsOpen(true);
+    }
+  }
 
   const handleDialogClose = () => {
     setIsOpen(false);
@@ -109,7 +117,7 @@ export default function UserListDialog({ userIds, title, children }: UserListDia
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

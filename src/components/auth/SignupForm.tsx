@@ -70,6 +70,8 @@ export default function SignupForm() {
           followers: 0,
           following: 0,
         },
+        followers: [],
+        following: [],
       });
 
       toast({
@@ -163,5 +165,3 @@ export default function SignupForm() {
     </Card>
   );
 }
-
-    

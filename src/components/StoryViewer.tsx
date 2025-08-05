@@ -173,7 +173,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     let timeAgo = 'baru saja';
     if (currentStory.createdAt) {
         let formattedTime = formatDistanceToNow(currentStory.createdAt.toDate(), { locale: id, addSuffix: false });
-        timeAgo = formattedTime.replace("kurang dari ", "");
+        timeAgo = formattedTime.replace("kurang dari ", "").replace("sekitar ", "");
     }
     const profileLink = `/user?id=${currentStory.author.id}`;
 

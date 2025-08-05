@@ -1,35 +1,34 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, PlusSquare, Bell, User } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   {
     href: '/',
-    Icon: Home,
     label: 'Beranda',
+    icon: 'home',
     storageKey: 'hasNewPosts',
   },
   {
     href: '/post',
-    Icon: PlusSquare,
-    label: 'Posting',
+    label: 'Post',
+    icon: 'plus-square',
   },
   {
     href: '/notifications',
-    Icon: Bell,
     label: 'Notifikasi',
+    icon: 'bell',
     storageKey: 'hasUnreadNotifications',
   },
   {
     href: '/profile',
-    Icon: User,
     label: 'Profil',
+    icon: 'user',
   },
 ];
 
@@ -75,6 +74,7 @@ export default function BottomNav() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
+            const iconSrc = `/icons/${item.icon}${isActive ? '-active' : ''}.svg`;
             const showIndicator = item.storageKey ? indicators[item.storageKey] : false;
 
             return (
@@ -86,8 +86,13 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <div className="relative">
-                    <item.Icon className={cn("h-6 w-6 transition-transform duration-200", isActive && "fill-current")} />
+                  <div className="relative w-6 h-6">
+                    <Image
+                      src={iconSrc}
+                      alt={item.label}
+                      fill
+                      className="transition-transform duration-200"
+                    />
                     {showIndicator && (
                         <Badge variant="destructive" className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card" />
                     )}

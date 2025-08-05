@@ -186,8 +186,8 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
             }
 
             toast({ title: "Cerita dihapus." });
+            // Let the parent component handle the UI update and closing the viewer
             onStoryDelete?.(currentStory.id, currentStory.author.id);
-            goToNextStory();
 
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Gagal menghapus cerita', description: error.message });

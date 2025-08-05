@@ -261,7 +261,7 @@ export default function PostEditor() {
 
             <Button type="submit" disabled={isLoading || (postType === 'story' && !!mediaError)} className="w-full">
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {postType === 'note' ? 'Posting' : 'Posting Cerita'}
+              {postType === 'note' ? 'Posting' : 'Posting'}
             </Button>
           </form>
         </Form>

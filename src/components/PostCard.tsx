@@ -3,7 +3,7 @@
 
 import type { Post } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -285,5 +285,3 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
     </Card>
   );
 }
-
-    

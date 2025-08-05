@@ -27,8 +27,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const currentStory = stories[storyIndex];
-    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
-    const profileLink = `/user?id=${currentStory.author.id}`;
 
     const goToNextStory = useCallback(() => {
         setStoryIndex(prevIndex => prevIndex + 1);
@@ -153,6 +151,9 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     if (!currentStory) {
         return null;
     }
+    
+    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { addSuffix: true }) : 'baru saja';
+    const profileLink = `/user?id=${currentStory.author.id}`;
 
 
     return (

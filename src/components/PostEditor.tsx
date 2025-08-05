@@ -24,6 +24,7 @@ import { Bot, Loader, Tag, X, Image as ImageIcon, Video, AlertCircle } from 'luc
 import { Card, CardContent } from './ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Switch } from './ui/switch';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -170,21 +171,35 @@ export default function PostEditor() {
         });
         toast({ title: 'Catatan Diposting!', description: 'Catatan baru Anda sekarang dapat dilihat oleh orang lain.' });
       } else if (postType === 'story' && mediaFile) {
-        // NOTE: In a real app, you would upload the file to a storage service (like Firebase Storage)
-        // and get a URL. For this prototype, we'll simulate this by converting the file to a Data URL.
-        const reader = new FileReader();
-        reader.readAsDataURL(mediaFile);
-        reader.onloadend = async () => {
-          const base64data = reader.result as string;
-           await addDoc(collection(db, "stories"), {
-                author: authorInfo,
-                mediaUrl: base64data,
-                mediaType: mediaFile.type.startsWith('image/') ? 'image' : 'video',
-                createdAt: serverTimestamp(),
-            });
-            toast({ title: 'Cerita Diposting!', description: 'Cerita baru Anda telah ditambahkan.' });
-            router.push('/');
+        // Upload to Supabase Storage
+        const fileExtension = mediaFile.name.split('.').pop();
+        const fileName = `${user.uid}-${Date.now()}.${fileExtension}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('stories')
+          .upload(fileName, mediaFile);
+
+        if (uploadError) {
+          throw new Error(`Gagal mengunggah media: ${uploadError.message}`);
         }
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('stories')
+          .getPublicUrl(fileName);
+
+        if (!urlData.publicUrl) {
+            throw new Error('Gagal mendapatkan URL publik untuk media.');
+        }
+
+        // Save metadata to Firestore
+        await addDoc(collection(db, "stories"), {
+            author: authorInfo,
+            mediaUrl: urlData.publicUrl,
+            mediaType: mediaFile.type.startsWith('image/') ? 'image' : 'video',
+            createdAt: serverTimestamp(),
+        });
+        toast({ title: 'Cerita Diposting!', description: 'Cerita baru Anda telah ditambahkan.' });
+        router.push('/');
       }
       
       form.reset();

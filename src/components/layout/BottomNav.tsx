@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 const navItems = [
   {
     href: '/',
     icon: 'home',
     label: 'Beranda',
+    storageKey: 'hasNewPosts',
   },
   {
     href: '/post',
@@ -21,6 +23,7 @@ const navItems = [
     href: '/notifications',
     icon: 'bell',
     label: 'Notifikasi',
+    storageKey: 'hasUnreadNotifications',
   },
   {
     href: '/profile',
@@ -31,6 +34,35 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [indicators, setIndicators] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    // Function to check storage and update indicators
+    const checkStorage = () => {
+        const newIndicators: Record<string, boolean> = {};
+        navItems.forEach(item => {
+            if (item.storageKey) {
+                const hasNew = localStorage.getItem(item.storageKey) === 'true';
+                newIndicators[item.storageKey] = hasNew;
+            }
+        });
+        setIndicators(newIndicators);
+    };
+
+    // Initial check
+    checkStorage();
+
+    // Listen for custom events that signal a change in indicators
+    window.addEventListener('storageUpdated', checkStorage);
+
+    // Also use the browser's native storage event for cross-tab sync
+    window.addEventListener('storage', checkStorage);
+
+    return () => {
+      window.removeEventListener('storageUpdated', checkStorage);
+      window.removeEventListener('storage', checkStorage);
+    };
+  }, []);
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden z-50">
@@ -43,6 +75,7 @@ export default function BottomNav() {
                 : pathname.startsWith(item.href);
 
             const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
+            const showIndicator = item.storageKey ? indicators[item.storageKey] : false;
 
             return (
               <li key={item.href} className="h-full">
@@ -60,6 +93,9 @@ export default function BottomNav() {
                       fill
                       className="transition-transform duration-200"
                     />
+                    {showIndicator && (
+                        <div className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-card" />
+                    )}
                   </div>
                   {/* The text label is hidden for a cleaner look, but can be re-enabled by removing sr-only */}
                   <span className="text-xs sr-only">{item.label}</span>

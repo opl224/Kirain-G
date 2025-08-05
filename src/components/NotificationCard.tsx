@@ -128,7 +128,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
   let timeAgo = 'baru saja';
   if (notification.createdAt) {
       let formattedTime = formatDistanceToNow(notification.createdAt.toDate(), { locale: id, addSuffix: false });
-      timeAgo = formattedTime.replace("kurang dari ", "");
+      timeAgo = formattedTime.replace("kurang dari ", "").replace("sekitar ", "");
   }
 
   const senderProfileLink = `/user?id=${notification.sender.id}`;

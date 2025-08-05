@@ -4,7 +4,7 @@
 import { Bell } from 'lucide-react';
 import { NotificationCard } from '@/components/NotificationCard';
 import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import type { Notification } from '@/lib/types';
@@ -15,9 +15,35 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Clear notification indicator on page visit
+  useEffect(() => {
+    localStorage.setItem('hasUnreadNotifications', 'false');
+    window.dispatchEvent(new Event('storageUpdated'));
+  }, []);
+
   useEffect(() => {
     if (user) {
-      const fetchNotifications = async () => {
+      // Set up a real-time listener for new notifications
+      const notificationsCollection = collection(db, 'notifications');
+      const q = query(
+        notificationsCollection,
+        where('recipientId', '==', user.uid)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const hasUnread = snapshot.docs.some(doc => !doc.data().read);
+        localStorage.setItem('hasUnreadNotifications', hasUnread.toString());
+        window.dispatchEvent(new Event('storageUpdated'));
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+
+  useEffect(() => {
+    if (user) {
+      const fetchAndClearNotifications = async () => {
         setIsLoading(true);
         try {
           const notificationsCollection = collection(db, 'notifications');
@@ -27,18 +53,31 @@ export default function NotificationsPage() {
             orderBy('createdAt', 'desc')
           );
           const querySnapshot = await getDocs(q);
-          const notificationsData = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Notification[];
+          const notificationsData: Notification[] = [];
+          const batch = writeBatch(db);
+          
+          querySnapshot.forEach(doc => {
+              const notification = { id: doc.id, ...doc.data() } as Notification;
+              notificationsData.push(notification);
+              // Mark unread notifications as read
+              if (!notification.read) {
+                  const notifRef = doc.ref;
+                  batch.update(notifRef, { read: true });
+              }
+          });
+
           setNotifications(notificationsData);
+
+          // Commit the batch update
+          await batch.commit();
+
         } catch (error) {
             console.error("Error fetching notifications: ", error);
         } finally {
             setIsLoading(false);
         }
       };
-      fetchNotifications();
+      fetchAndClearNotifications();
     } else if (!authIsLoading) {
         setIsLoading(false);
     }

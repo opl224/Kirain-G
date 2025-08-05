@@ -4,7 +4,7 @@
 import { PostCard } from '@/components/PostCard';
 import { db } from '@/lib/firebase';
 import { Post, Story } from '@/lib/types';
-import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, Timestamp, where, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import StoryTray from '@/components/StoryTray';
 
@@ -12,6 +12,16 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [groupedStories, setGroupedStories] = useState<{[key: string]: Story[]}>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Clear the new posts indicator when visiting the home page
+    const lastSeenPost = localStorage.getItem('lastSeenPostTimestamp');
+    if (posts.length > 0 && (!lastSeenPost || posts[0].createdAt.toMillis() > Number(lastSeenPost))) {
+        localStorage.setItem('lastSeenPostTimestamp', posts[0].createdAt.toMillis().toString());
+    }
+    localStorage.setItem('hasNewPosts', 'false');
+    window.dispatchEvent(new Event('storageUpdated'));
+  }, [posts]);
 
   useEffect(() => {
     const fetchAllContent = async () => {
@@ -57,6 +67,22 @@ export default function HomePage() {
     };
 
     fetchAllContent();
+
+    // Listen for new posts
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const firstDoc = snapshot.docs[0];
+        if (firstDoc) {
+            const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
+            const newPostTimestamp = (firstDoc.data().createdAt as Timestamp).toMillis();
+            if (newPostTimestamp > lastSeenTimestamp) {
+                localStorage.setItem('hasNewPosts', 'true');
+                window.dispatchEvent(new Event('storageUpdated'));
+            }
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const storyAuthors = Object.values(groupedStories).map(storyList => storyList[0].author);
@@ -90,5 +116,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

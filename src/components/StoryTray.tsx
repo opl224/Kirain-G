@@ -54,7 +54,7 @@ export default function StoryTray({ stories, isLoading }: StoryTrayProps) {
       </div>
       
       <Dialog open={!!selectedStory} onOpenChange={(open) => !open && closeViewer()}>
-        <DialogContent className="p-0 max-w-md h-[80vh] bg-black border-none overflow-hidden">
+        <DialogContent className="p-0 bg-black border-none overflow-hidden w-screen h-screen max-w-full max-h-full rounded-none sm:max-w-md sm:h-[80vh] sm:rounded-lg">
             <DialogTitle className="sr-only">Penampil Cerita</DialogTitle>
             {selectedStory && <StoryViewer story={selectedStory} onClose={closeViewer} />}
         </DialogContent>

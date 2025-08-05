@@ -47,8 +47,7 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
     const { toast } = useToast();
     
     const videoRef = useRef<HTMLVideoElement>(null);
-    const requestRef = useRef<number>();
-    const imageTimerStartRef = useRef<number>(0);
+    const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const currentStory = stories[storyIndex];
     const isAuthor = authUser?.uid === currentStory?.author.id;
@@ -69,75 +68,72 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
     // Reset progress and timers on story change
     useEffect(() => {
         setProgress(0);
-        if (videoRef.current) {
-            videoRef.current.currentTime = 0;
+        
+        // Clear any existing timers
+        if (imageTimerRef.current) {
+            clearInterval(imageTimerRef.current);
+            imageTimerRef.current = null;
         }
-        imageTimerStartRef.current = Date.now();
-        if (requestRef.current) {
-            cancelAnimationFrame(requestRef.current);
-        }
-    }, [storyIndex]);
 
-    // Main animation loop
-    const animate = useCallback(() => {
-        if (isPaused || isDeleting) {
-            if (currentStory?.mediaType === 'image') {
-                // Adjust start time to account for pause
-                imageTimerStartRef.current = Date.now() - (progress / 100) * STORY_DURATION;
-            }
-        } else {
-            if (currentStory?.mediaType === 'video' && videoRef.current) {
-                const video = videoRef.current;
-                if (video.duration) {
-                    const newProgress = (video.currentTime / video.duration) * 100;
-                    setProgress(newProgress);
-                    if (video.ended) {
-                        goToNextStory();
-                    }
-                }
-            } else if (currentStory?.mediaType === 'image') {
-                const elapsedTime = Date.now() - imageTimerStartRef.current;
+        if (isPaused) return;
+
+        if (currentStory.mediaType === 'image') {
+            const startTime = Date.now();
+            imageTimerRef.current = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
                 const newProgress = (elapsedTime / STORY_DURATION) * 100;
                 if (newProgress >= 100) {
                     goToNextStory();
                 } else {
                     setProgress(newProgress);
                 }
+            }, 50); // Update progress smoothly
+        } else if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+            const playPromise = videoRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => console.error("Play error on story change:", err));
             }
         }
-        requestRef.current = requestAnimationFrame(animate);
-    }, [isPaused, isDeleting, currentStory, progress, goToNextStory]);
-
-
-    useEffect(() => {
-        requestRef.current = requestAnimationFrame(animate);
+        
         return () => {
-            if (requestRef.current) {
-                cancelAnimationFrame(requestRef.current);
+            if (imageTimerRef.current) {
+                clearInterval(imageTimerRef.current);
             }
-        };
-    }, [animate]);
+        }
 
-
+    }, [storyIndex, currentStory, goToNextStory, isPaused]);
+    
     // Handle video play/pause state
     useEffect(() => {
         const video = videoRef.current;
-        if (video) {
-            if (isPaused || isDeleting) {
-                video.pause();
-            } else {
-                 const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        // Autoplay was prevented. This is common.
-                        if (error.name !== 'AbortError') {
-                            console.error("Video play error on resume:", error);
-                        }
-                    });
-                }
+        if (!video) return;
+
+        if (isPaused || isDeleting) {
+            video.pause();
+        } else {
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Video play error on resume:", error);
+                    }
+                });
             }
         }
     }, [isPaused, isDeleting, storyIndex]);
+
+
+    const handleVideoTimeUpdate = () => {
+        const video = videoRef.current;
+        if (video && video.duration) {
+            setProgress((video.currentTime / video.duration) * 100);
+        }
+    };
+
+    const handleVideoEnded = () => {
+        goToNextStory();
+    };
 
 
     const toggleMute = (e: React.MouseEvent) => {
@@ -170,7 +166,7 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Gagal menghapus cerita', description: error.message });
         } finally {
-            // No need to set isDeleting to false if the component is unmounting
+            // Component will unmount or move to next story, no need to set isDeleting to false
         }
     };
 
@@ -213,7 +209,16 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
             {currentStory.mediaType === 'image' ? (
                 <img src={currentStory.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${currentStory.author.name}`} />
             ): (
-                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline />
+                <video 
+                    ref={videoRef} 
+                    src={currentStory.mediaUrl} 
+                    className="w-full h-full object-contain" 
+                    autoPlay 
+                    muted={isMuted} 
+                    playsInline 
+                    onTimeUpdate={handleVideoTimeUpdate}
+                    onEnded={handleVideoEnded}
+                />
             )}
             
             {/* Click handlers for navigation and pause */}
@@ -232,10 +237,10 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
                 <div className="flex items-center gap-1 w-full">
                     {stories.map((_, idx) => (
                         <div key={idx} className="relative w-full h-1 bg-white/30 rounded-full overflow-hidden">
-                           {idx < storyIndex && <div className="absolute top-0 left-0 h-full w-full bg-white" />}
-                           {idx === storyIndex && (
-                                <Progress value={progress} className="w-full h-full bg-white !p-0" />
-                           )}
+                           <div 
+                                className="absolute top-0 left-0 h-full bg-white transition-all duration-100"
+                                style={{ width: `${idx < storyIndex ? 100 : (idx === storyIndex ? progress : 0)}%`}}
+                            />
                         </div>
                     ))}
                 </div>

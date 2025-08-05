@@ -26,6 +26,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PostCard } from '@/components/PostCard';
 import { Separator } from '@/components/ui/separator';
 import TruncatedText from '@/components/TruncatedText';
+import UserListDialog from '@/components/UserListDialog';
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
@@ -128,7 +129,7 @@ export default function UserProfilePage() {
           followers: arrayRemove(authUser.uid),
           'stats.followers': increment(-1),
         });
-        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}} : null);
+        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers - 1}, followers: p.followers?.filter(id => id !== authUser.uid)} : null);
         toast({ title: `You unfollowed @${userProfile.handle}` });
       } else {
         // Follow
@@ -139,7 +140,7 @@ export default function UserProfilePage() {
           followers: arrayUnion(authUser.uid),
           'stats.followers': increment(1),
         });
-        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}} : null);
+        setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
         toast({ title: `You are now following @${userProfile.handle}` });
       }
       setIsFollowing(!isFollowing);
@@ -184,8 +185,18 @@ export default function UserProfilePage() {
         </Avatar>
         <div className="flex-1 flex justify-around">
           <StatItem label="Posts" value={userPosts.length} />
-          <StatItem label="Followers" value={userProfile.stats.followers} />
-          <StatItem label="Following" value={userProfile.stats.following} />
+          <UserListDialog userIds={userProfile.followers || []} title="Followers">
+            <button className="text-center disabled:opacity-50" disabled={!userProfile.followers || userProfile.followers.length === 0}>
+                <p className="text-lg font-bold">{userProfile.stats.followers}</p>
+                <p className="text-sm text-muted-foreground">Followers</p>
+            </button>
+          </UserListDialog>
+          <UserListDialog userIds={userProfile.following || []} title="Following">
+             <button className="text-center disabled:opacity-50" disabled={!userProfile.following || userProfile.following.length === 0}>
+                <p className="text-lg font-bold">{userProfile.stats.following}</p>
+                <p className="text-sm text-muted-foreground">Following</p>
+            </button>
+          </UserListDialog>
         </div>
       </div>
 

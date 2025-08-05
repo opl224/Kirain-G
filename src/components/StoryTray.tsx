@@ -54,7 +54,9 @@ export default function StoryTray({ groupedStories: initialGroupedStories, isLoa
   }, [initialGroupedStories]);
 
   useEffect(() => {
-    localStorage.setItem('viewedStoryAuthors', JSON.stringify(Array.from(viewedAuthors)));
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('viewedStoryAuthors', JSON.stringify(Array.from(viewedAuthors)));
+    }
   }, [viewedAuthors]);
 
 

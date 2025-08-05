@@ -4,7 +4,7 @@
 import { PostCard } from '@/components/PostCard';
 import { db } from '@/lib/firebase';
 import { Post, Story } from '@/lib/types';
-import { collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import StoryTray from '@/components/StoryTray';
 

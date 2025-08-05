@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment, addDoc, collection, serverTimestamp, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export function PostCard({ post }: { post: Post }) {
   const { user } = useAuth();

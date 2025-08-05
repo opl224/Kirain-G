@@ -10,7 +10,7 @@ import StoryTray from '@/components/StoryTray';
 
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
+  const [groupedStories, setGroupedStories] = useState<{[key: string]: Story[]}>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function HomePage() {
         // Fetch Stories (from the last 24 hours)
         const storiesCollection = collection(db, 'stories');
         const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
-        const storiesQuery = query(storiesCollection, where('createdAt', '>=', twentyFourHoursAgo), orderBy('createdAt', 'desc'));
+        const storiesQuery = query(storiesCollection, where('createdAt', '>=', twentyFourHoursAgo), orderBy('createdAt', 'asc')); // Order ascending to play in order
         const storySnapshot = await getDocs(storiesQuery);
         const storiesData = storySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Story[];
         
@@ -47,10 +47,7 @@ export default function HomePage() {
             }
         });
         
-        // Flatten the grouped stories and take the first story of each user for the tray display
-        const displayStories = Object.values(userStories).map(userStoryList => userStoryList[0]);
-        setStories(displayStories);
-
+        setGroupedStories(userStories);
 
       } catch (error) {
         console.error("Error fetching content: ", error);
@@ -62,13 +59,17 @@ export default function HomePage() {
     fetchAllContent();
   }, []);
 
+  const storyAuthors = Object.values(groupedStories).map(storyList => storyList[0].author);
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-        {isLoading || stories.length > 0 ? (
+        {isLoading || storyAuthors.length > 0 ? (
           <div className="mb-8">
             <h2 className="text-xl font-bold font-headline mb-4">Cerita</h2>
-            <StoryTray stories={stories} isLoading={isLoading} />
+            <StoryTray 
+              groupedStories={groupedStories} 
+              isLoading={isLoading} 
+            />
           </div>
         ) : null}
 

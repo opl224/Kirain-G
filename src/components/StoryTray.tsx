@@ -9,12 +9,12 @@ import { useState } from 'react';
 import StoryViewer from './StoryViewer';
 
 interface StoryTrayProps {
-  stories: Story[];
+  groupedStories: { [key: string]: Story[] };
   isLoading: boolean;
 }
 
-const StoryBubble = ({ story, onSelect }: { story: Story; onSelect: (story: Story) => void; }) => (
-  <button onClick={() => onSelect(story)} className="flex flex-col items-center gap-2 w-20 text-center">
+const StoryBubble = ({ story, onSelect }: { story: Story; onSelect: (authorId: string) => void; }) => (
+  <button onClick={() => onSelect(story.author.id)} className="flex flex-col items-center gap-2 w-20 text-center">
     <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500">
       <Avatar className="w-16 h-16 border-2 border-background">
         <AvatarImage src={story.author.avatarUrl} alt={story.author.name} />
@@ -32,34 +32,37 @@ const StoryBubbleSkeleton = () => (
   </div>
 );
 
-export default function StoryTray({ stories, isLoading }: StoryTrayProps) {
-  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps) {
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
 
-  const handleSelectStory = (story: Story) => {
-    setSelectedStory(story);
+  const handleSelectStory = (authorId: string) => {
+    setSelectedAuthorId(authorId);
   };
 
   const closeViewer = () => {
-    setSelectedStory(null);
+    setSelectedAuthorId(null);
   };
   
+  const storiesForSelectedUser = selectedAuthorId ? groupedStories[selectedAuthorId] : [];
+  const storyAuthors = Object.values(groupedStories).map(storyList => storyList[0]);
+
   return (
     <>
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => <StoryBubbleSkeleton key={i} />)
         ) : (
-          stories.map((story) => <StoryBubble key={story.id} story={story} onSelect={handleSelectStory} />)
+          storyAuthors.map((story) => <StoryBubble key={story.author.id} story={story} onSelect={handleSelectStory} />)
         )}
       </div>
       
-      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && closeViewer()}>
+      <Dialog open={!!selectedAuthorId} onOpenChange={(open) => !open && closeViewer()}>
         <DialogContent 
             className="p-0 bg-black border-none overflow-hidden data-[state=open]:animate-none w-screen h-screen max-w-full max-h-full sm:rounded-lg sm:max-w-md sm:h-[90vh] sm:max-h-[90vh]"
             hideCloseButton={true}
         >
             <DialogTitle className="sr-only">Penampil Cerita</DialogTitle>
-            {selectedStory && <StoryViewer story={selectedStory} onClose={closeViewer} />}
+            {storiesForSelectedUser.length > 0 && <StoryViewer stories={storiesForSelectedUser} onClose={closeViewer} />}
         </DialogContent>
       </Dialog>
     </>

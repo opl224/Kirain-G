@@ -205,7 +205,7 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
         <div className="flex-grow">
           <div className="flex items-center gap-1">
             <Link href={profileLink}>
-              <p className="font-semibold text-card-foreground hover:underline">{post.author.name}</p>
+              <p className="font-semibold text-card-foreground">{post.author.name}</p>
             </Link>
             {post.author.isVerified && (
               <BadgeCheck className="h-4 w-4 text-primary" />
@@ -213,7 +213,7 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Link href={profileLink}>
-              <span className="hover:underline">@{post.author.handle}</span>
+              <span>@{post.author.handle}</span>
             </Link>
             {postDate && (
               <>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -6,6 +7,10 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const navItems = [
   {
@@ -17,7 +22,7 @@ const navItems = [
   {
     href: '/post',
     label: 'Post',
-    icon: 'plus-square',
+    icon: 'post',
   },
   {
     href: '/notifications',
@@ -28,34 +33,46 @@ const navItems = [
   {
     href: '/profile',
     label: 'Profil',
-    icon: 'user',
+    icon: 'profile',
   },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [indicators, setIndicators] = useState<Record<string, boolean>>({});
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarInitial, setAvatarInitial] = useState('');
 
   useEffect(() => {
-    // Function to check storage and update indicators
+    if (user) {
+      const fetchAvatar = async () => {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setAvatarUrl(userData.avatarUrl);
+          setAvatarInitial(userData.name?.charAt(0) || '');
+        }
+      };
+      fetchAvatar();
+    }
+  }, [user]);
+
+  useEffect(() => {
     const checkStorage = () => {
-        const newIndicators: Record<string, boolean> = {};
-        navItems.forEach(item => {
-            if (item.storageKey) {
-                const hasNew = localStorage.getItem(item.storageKey) === 'true';
-                newIndicators[item.storageKey] = hasNew;
-            }
-        });
-        setIndicators(newIndicators);
+      const newIndicators: Record<string, boolean> = {};
+      navItems.forEach((item) => {
+        if (item.storageKey) {
+          const hasNew = localStorage.getItem(item.storageKey) === 'true';
+          newIndicators[item.storageKey] = hasNew;
+        }
+      });
+      setIndicators(newIndicators);
     };
 
-    // Initial check
     checkStorage();
-
-    // Listen for custom events that signal a change in indicators
     window.addEventListener('storageUpdated', checkStorage);
-
-    // Also use the browser's native storage event for cross-tab sync
     window.addEventListener('storage', checkStorage);
 
     return () => {
@@ -74,8 +91,10 @@ export default function BottomNav() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
-            const iconSrc = `/icons/${item.icon}${isActive ? '-active' : ''}.svg`;
-            const showIndicator = item.storageKey ? indicators[item.storageKey] : false;
+            const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
+            const showIndicator = item.storageKey
+              ? indicators[item.storageKey]
+              : false;
 
             return (
               <li key={item.href} className="h-full">
@@ -87,17 +106,31 @@ export default function BottomNav() {
                   )}
                 >
                   <div className="relative w-6 h-6">
-                    <Image
-                      src={iconSrc}
-                      alt={item.label}
-                      fill
-                      className="transition-transform duration-200"
-                    />
+                    {item.href === '/profile' && avatarUrl ? (
+                      <Avatar
+                        className={cn(
+                          'w-6 h-6',
+                          isActive && 'ring-2 ring-primary'
+                        )}
+                      >
+                        <AvatarImage src={avatarUrl} alt="User Avatar" />
+                        <AvatarFallback>{avatarInitial}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Image
+                        src={iconSrc}
+                        alt={item.label}
+                        fill
+                        className="transition-transform duration-200"
+                      />
+                    )}
                     {showIndicator && (
-                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card" />
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card"
+                      />
                     )}
                   </div>
-                  {/* The text label is hidden for a cleaner look, but can be re-enabled by removing sr-only */}
                   <span className="text-xs sr-only">{item.label}</span>
                 </Link>
               </li>

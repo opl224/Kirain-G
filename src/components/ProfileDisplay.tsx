@@ -13,7 +13,7 @@ import TruncatedText from './TruncatedText';
 import { Camera, Loader, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, setDoc, getDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, collection } from 'firebase/firestore';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -98,7 +98,6 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
           title: 'Avatar Diperbarui',
           description: 'Gambar profil Anda berhasil diubah.',
         });
-        setIsUploading(false);
       };
       reader.onerror = (error) => {
         console.error(error);
@@ -110,6 +109,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
         title: 'Gagal Mengunggah',
         description: error.message,
       });
+    } finally {
       setIsUploading(false);
     }
   };
@@ -168,7 +168,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
               <Menu className="h-6 w-6" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => router.push('/profile/saved')}>
               Tersimpan
             </DropdownMenuItem>
@@ -181,10 +181,10 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Pengaturan Akun</DropdownMenuLabel>
             <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-              <Label htmlFor="privacy-switch" className="flex-grow">Akun Privat</Label>
+              <Label htmlFor="privacy-switch" className="flex-grow pr-2">Akun Privat</Label>
               <Switch
                 id="privacy-switch"
-                checked={currentUser.isPrivate}
+                checked={!!currentUser.isPrivate}
                 onCheckedChange={handlePrivacyChange}
               />
             </div>
@@ -260,5 +260,3 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
     </div>
   );
 }
-
-    

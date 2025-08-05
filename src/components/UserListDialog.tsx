@@ -126,14 +126,9 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
       <DialogContent className="p-0 flex flex-col">
-         <DialogHeader className="flex flex-row items-center gap-4 p-4 border-b">
-            <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                    <ArrowLeft className="h-6 w-6" />
-                    <span className="sr-only">Kembali</span>
-                </Button>
-            </DialogClose>
-            <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
+         <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-lg font-semibold text-center">{title}</DialogTitle>
+             <DialogTitle className="sr-only">{title}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-full">
             <div className="p-2">

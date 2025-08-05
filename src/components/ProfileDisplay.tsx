@@ -161,14 +161,9 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
             <Button className="w-full">Ubah Profil</Button>
           </DialogTrigger>
           <DialogContent className="p-0 flex flex-col">
-            <DialogHeader className="flex flex-row items-center gap-4 p-4 border-b">
-                <DialogClose asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                        <ArrowLeft className="h-6 w-6" />
-                        <span className="sr-only">Kembali</span>
-                    </Button>
-                </DialogClose>
-                <DialogTitle className="text-lg font-semibold">Ubah Profil</DialogTitle>
+            <DialogHeader className="p-4 border-b">
+                <DialogTitle className="text-lg font-semibold text-center">Ubah Profil</DialogTitle>
+                <DialogTitle className="sr-only">Ubah Profil</DialogTitle>
             </DialogHeader>
             <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />
           </DialogContent>

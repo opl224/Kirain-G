@@ -160,7 +160,26 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         <div 
             className="relative w-full h-full rounded-lg overflow-hidden flex flex-col bg-black select-none"
         >
-            <div className="absolute top-0 left-0 right-0 p-4 z-10" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
+            {/* Media content (Image or Video) */}
+            {currentStory.mediaType === 'image' ? (
+                <img src={currentStory.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${currentStory.author.name}`} />
+            ): (
+                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline onLoadedData={startTimer} />
+            )}
+
+            {/* Click handlers are now on a single div over the content */}
+            <div className="absolute inset-0 z-10 flex"
+                onMouseDown={handleInteractionStart}
+                onMouseUp={handleInteractionEnd}
+                onMouseLeave={handleInteractionEnd}
+                onTouchStart={handleInteractionStart}
+                onTouchEnd={handleInteractionEnd}
+                onClick={handleClickNavigation}
+            >
+            </div>
+
+            {/* Header with progress bar, user info, and controls. High z-index to be on top. */}
+            <div className="absolute top-0 left-0 right-0 p-4 z-20" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
                 <div className="flex items-center gap-1 w-full">
                     {stories.map((_, idx) => (
                         <div key={idx} className="relative w-full h-1 bg-white/30 rounded-full overflow-hidden">
@@ -182,34 +201,16 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                     </Link>
                      <div className="flex items-center gap-4">
                         {currentStory.mediaType === 'video' && (
-                            <button onClick={toggleMute} className="text-white z-30">
+                            <button onClick={toggleMute} className="text-white">
                                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                             </button>
                         )}
-                        <button onClick={onClose} className="text-white z-30">
+                        <button onClick={onClose} className="text-white">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
                 </div>
             </div>
-            
-            {/* Click handlers are now on a single div over the content */}
-            <div className="absolute inset-0 z-20 flex"
-                onMouseDown={handleInteractionStart}
-                onMouseUp={handleInteractionEnd}
-                onMouseLeave={handleInteractionEnd}
-                onTouchStart={handleInteractionStart}
-                onTouchEnd={handleInteractionEnd}
-                onClick={handleClickNavigation}
-            >
-            </div>
-            
-
-            {currentStory.mediaType === 'image' ? (
-                <img src={currentStory.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${currentStory.author.name}`} />
-            ): (
-                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline onLoadedData={startTimer} />
-            )}
         </div>
     );
 }

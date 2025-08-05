@@ -29,6 +29,7 @@ import { PostCard } from '@/components/PostCard';
 import { Separator } from '@/components/ui/separator';
 import TruncatedText from '@/components/TruncatedText';
 import UserListDialog from '@/components/UserListDialog';
+import { cn } from '@/lib/utils';
 
 function StatItem({ label, value, isDisabled = false }: { label: string; value: number | string, isDisabled?: boolean }) {
   return (

@@ -61,8 +61,6 @@ export default function ProfilePage() {
   }
 
   return (
-    <div>
-      <ProfileDisplay user={userProfile} posts={userPosts} />
-    </div>
+    <ProfileDisplay user={userProfile} posts={userPosts} />
   );
 }

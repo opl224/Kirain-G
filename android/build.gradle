@@ -7,7 +7,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.1'
+        classpath 'com.android.tools.build:gradle:8.2.1'
     }
 }
 
@@ -15,12 +15,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-    }
-
-    // Set Java compatibility for all projects
-    tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

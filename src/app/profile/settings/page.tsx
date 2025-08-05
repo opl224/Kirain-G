@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Loader, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Loader, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -186,6 +186,22 @@ export default function SettingsPage() {
              )}
           </CardContent>
         </Card>
+
+        {isSuperUser && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <NavLink href="/profile/settings/verifications">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  <span className="text-base">Kelola Verifikasi</span>
+                </div>
+              </NavLink>
+            </CardContent>
+          </Card>
+        )}
         
         <Card>
             <CardContent className="p-0">

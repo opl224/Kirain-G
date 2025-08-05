@@ -71,7 +71,7 @@ export default function UserProfilePage() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          const profileData = userDocSnap.data() as User;
+          const profileData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
           setUserProfile(profileData);
           if (authUser && profileData.followers?.includes(authUser.uid)) {
             setIsFollowing(true);
@@ -181,7 +181,7 @@ export default function UserProfilePage() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Posts" value={posts.length} />
+          <StatItem label="Posts" value={userPosts.length} />
           <StatItem label="Followers" value={userProfile.stats.followers} />
           <StatItem label="Following" value={userProfile.stats.following} />
         </div>
@@ -213,8 +213,8 @@ export default function UserProfilePage() {
           Notes
         </h2>
         <div className="space-y-6">
-          {posts.length > 0 ? (
-            posts.map((post) => <PostCard key={post.id} post={post} />)
+          {userPosts.length > 0 ? (
+            userPosts.map((post) => <PostCard key={post.id} post={post} />)
           ) : (
             <p className="text-center text-muted-foreground py-8">
               No notes yet.

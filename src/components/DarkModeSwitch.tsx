@@ -2,7 +2,6 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { Switch } from '@/components/ui/switch';
 import { useEffect, useState } from 'react';
 
 export function DarkModeSwitch() {
@@ -14,7 +13,8 @@ export function DarkModeSwitch() {
   }, []);
 
   if (!isMounted) {
-    return <Switch id="dark-mode-switch" disabled />;
+    // Render a placeholder or null on the server
+    return <div style={{width: '3.5em', height: '2em'}}></div>;
   }
 
   const isDarkMode = theme === 'dark';
@@ -24,10 +24,15 @@ export function DarkModeSwitch() {
   };
 
   return (
-    <Switch
-      id="dark-mode-switch"
-      checked={isDarkMode}
-      onCheckedChange={handleCheckedChange}
-    />
+    <label htmlFor="dark-mode-switch" className="switch">
+      <input 
+        id="dark-mode-switch" 
+        type="checkbox" 
+        checked={isDarkMode}
+        onChange={(e) => handleCheckedChange(e.target.checked)}
+        />
+      <span className="slider"></span>
+      <span className="decoration"></span>
+    </label>
   );
 }

@@ -12,8 +12,7 @@ import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
 import { Camera, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { storage, db } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
@@ -56,33 +55,36 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
 
     setIsUploading(true);
     try {
-      // 1. Upload image to Firebase Storage
-      const storageRef = ref(storage, `avatars/${currentUser.id}/${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      
-      // 2. Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        
+        // Update user document in Firestore with the Base64 Data URL
+        const userDocRef = doc(db, 'users', currentUser.id);
+        await updateDoc(userDocRef, {
+          avatarUrl: base64data,
+        });
 
-      // 3. Update user document in Firestore
-      const userDocRef = doc(db, 'users', currentUser.id);
-      await updateDoc(userDocRef, {
-        avatarUrl: downloadURL,
-      });
+        // Update local state
+        handleProfileUpdate({ avatarUrl: base64data });
 
-      // 4. Update local state
-      handleProfileUpdate({ avatarUrl: downloadURL });
-
-      toast({
-        title: 'Avatar Diperbarui',
-        description: 'Gambar profil Anda berhasil diubah.',
-      });
+        toast({
+          title: 'Avatar Diperbarui',
+          description: 'Gambar profil Anda berhasil diubah.',
+        });
+        setIsUploading(false);
+      };
+      reader.onerror = (error) => {
+        console.error(error);
+        throw new Error("Gagal membaca file.");
+      }
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Gagal Mengunggah',
         description: error.message,
       });
-    } finally {
       setIsUploading(false);
     }
   };

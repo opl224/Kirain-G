@@ -36,6 +36,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
 
+    // Effect to handle story completion and closing the viewer
     useEffect(() => {
         if (storyIndex >= stories.length) {
             onClose();
@@ -44,28 +45,26 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
 
 
     const startTimer = useCallback(() => {
+        // Clear any existing timers
         if (timerRef.current) clearTimeout(timerRef.current);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-        setProgress(0);
 
         if (isPaused || !currentStory) return;
 
         if (currentStory.mediaType === 'video' && videoRef.current) {
             const video = videoRef.current;
+            
             const onTimeUpdate = () => {
                 if (video.duration) {
                     setProgress((video.currentTime / video.duration) * 100);
                 }
             };
-            const onEnded = () => {
-                goToNextStory();
-            };
+            const onEnded = () => goToNextStory();
+
             video.addEventListener('timeupdate', onTimeUpdate);
             video.addEventListener('ended', onEnded);
             
-            // Play returns a promise, which can be interrupted.
             video.play().catch(error => {
-                // Ignore interruption errors, as they are expected when navigating quickly.
                 if (error.name !== 'AbortError') {
                     console.error("Video play error:", error);
                 }
@@ -75,31 +74,43 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                 video.removeEventListener('timeupdate', onTimeUpdate);
                 video.removeEventListener('ended', onEnded);
             };
+
         } else {
             // Image story
-            progressIntervalRef.current = setInterval(() => {
-                setProgress(p => {
-                     const newProgress = p + (100 / (STORY_DURATION / 100));
-                     if (newProgress >= 100) {
-                         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-                         return 100;
-                     }
-                     return newProgress;
-                 });
-             }, 100);
- 
-             timerRef.current = setTimeout(goToNextStory, STORY_DURATION);
+            const startTime = Date.now();
+            const startProgress = progress; // Resume from current progress
+
+            const tick = () => {
+                const elapsedTime = Date.now() - startTime;
+                const newProgress = startProgress + (elapsedTime / STORY_DURATION) * 100;
+
+                if (newProgress >= 100) {
+                    setProgress(100);
+                    goToNextStory();
+                } else {
+                    setProgress(newProgress);
+                    timerRef.current = setTimeout(tick, 50); // Update progress roughly every 50ms
+                }
+            };
+
+            timerRef.current = setTimeout(tick, 50);
         }
-    }, [currentStory, isPaused, goToNextStory]);
+    }, [currentStory, isPaused, goToNextStory, progress]);
 
 
+    // Effect to reset progress when story changes
     useEffect(() => {
-      // Reset and start timer when storyIndex changes
+        setProgress(0);
+    }, [storyIndex]);
+
+    // Effect to start/stop timer when story or pause state changes
+    useEffect(() => {
       const cleanup = startTimer();
       return cleanup;
-    }, [storyIndex, startTimer]);
+    }, [storyIndex, isPaused, startTimer]);
 
 
+    // Effect to handle video element pause/play
     useEffect(() => {
         const video = videoRef.current;
         if (video) {
@@ -133,7 +144,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     const handleClickNavigation = (e: React.MouseEvent<HTMLDivElement>) => {
         if (isPaused) return; // Don't navigate if paused by holding
         
-        // Reset pause state to prevent conflicts when navigating
         setIsPaused(false);
         if (timerRef.current) clearTimeout(timerRef.current);
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);

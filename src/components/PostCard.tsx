@@ -1,3 +1,4 @@
+
 import type { Post } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,29 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 export function PostCard({ post }: { post: Post }) {
+  const { user } = useAuth();
+  const profileLink = user && user.uid === post.author.id ? '/profile' : `/user?id=${post.author.id}`;
+
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center gap-3 p-4">
-        <Avatar>
-          <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-          <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <Link href={profileLink}>
+          <Avatar>
+            <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+        </Link>
         <div>
-          <p className="font-semibold text-card-foreground">{post.author.name}</p>
-          <p className="text-xs text-muted-foreground">@{post.author.handle}</p>
+          <Link href={profileLink}>
+            <p className="font-semibold text-card-foreground hover:underline">{post.author.name}</p>
+          </Link>
+          <Link href={profileLink}>
+            <p className="text-xs text-muted-foreground hover:underline">@{post.author.handle}</p>
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">

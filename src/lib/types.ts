@@ -13,6 +13,9 @@ export interface User {
     followers: number;
     following: number;
   };
+  // Add followers and following arrays to track relationships
+  followers?: string[]; // Array of user IDs
+  following?: string[]; // Array of user IDs
 }
 
 export interface Post {

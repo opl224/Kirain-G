@@ -24,9 +24,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  handle: z.string().min(3, { message: 'Handle must be at least 3 characters.' }).regex(/^[a-zA-Z0-9_]+$/, 'Handle can only contain letters, numbers, and underscores.'),
-  bio: z.string().max(160, { message: 'Bio cannot be longer than 160 characters.' }).optional(),
+  name: z.string()
+    .min(2, { message: 'Nama harus terdiri dari minimal 2 karakter.' })
+    .max(15, { message: 'Nama tidak boleh lebih dari 15 karakter.' })
+    .regex(/^[a-zA-Z0-9]+$/, 'Nama hanya boleh berisi huruf dan angka, tanpa spasi.'),
+  handle: z.string()
+    .min(3, { message: 'Username harus terdiri dari minimal 3 karakter.' })
+    .max(10, { message: 'Username tidak boleh lebih dari 10 karakter.'})
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username hanya boleh berisi huruf, angka, dan garis bawah.'),
+  bio: z.string()
+    .max(250, { message: 'Bio tidak boleh lebih dari 250 karakter.' })
+    .optional(),
 });
 
 interface EditProfileFormProps {
@@ -61,8 +69,8 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
       await updateDoc(userDocRef, updatedData);
 
       toast({
-        title: 'Profile Updated',
-        description: "Your profile information has been saved.",
+        title: 'Profil Diperbarui',
+        description: "Informasi profil Anda telah disimpan.",
       });
 
       // Call the callback to update the parent component's state
@@ -71,7 +79,7 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
+        title: 'Pembaruan Gagal',
         description: error.message,
       });
     } finally {
@@ -87,9 +95,9 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Nama</FormLabel>
               <FormControl>
-                <Input placeholder="Your full name" {...field} />
+                <Input placeholder="Nama lengkap Anda" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -102,7 +110,7 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="your_username" {...field} />
+                <Input placeholder="username_anda" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,7 +124,7 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
               <FormLabel>Bio</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Tell us a little about yourself"
+                  placeholder="Ceritakan sedikit tentang diri Anda"
                   className="resize-none"
                   {...field}
                 />
@@ -127,7 +135,7 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
         />
         <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-          Save Changes
+          Simpan Perubahan
         </Button>
       </form>
     </Form>

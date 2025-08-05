@@ -9,6 +9,7 @@ import { Separator } from './ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import EditProfileForm from './EditProfileForm';
 import { useState } from 'react';
+import TruncatedText from './TruncatedText';
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
@@ -46,9 +47,9 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       </div>
 
       <div className="mt-6">
-        <h1 className="text-xl font-bold">{currentUser.name}</h1>
-        <p className="text-muted-foreground">@{currentUser.handle}</p>
-        {currentUser.bio && <p className="mt-2 text-foreground/90">{currentUser.bio}</p>}
+        <TruncatedText text={currentUser.name} lineClamp={2} className="text-xl font-bold" />
+        <TruncatedText text={`@${currentUser.handle}`} lineClamp={2} className="text-muted-foreground" />
+        {currentUser.bio && <TruncatedText text={currentUser.bio} lineClamp={2} className="mt-2 text-foreground/90" />}
       </div>
       
       <div className="mt-6">

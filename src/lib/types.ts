@@ -35,6 +35,22 @@ export interface Post {
   createdAt: Timestamp;
 }
 
+export interface Story {
+  id: string;
+  author: {
+    id: string;
+    name: string;
+    handle: string;
+    avatarUrl: string;
+    isVerified?: boolean;
+  }
+  mediaUrl: string;
+  mediaType: 'image' | 'video';
+  createdAt: Timestamp;
+  duration?: number;
+}
+
+
 export interface Notification {
   id: string;
   type: 'like' | 'follow' | 'verification_request';

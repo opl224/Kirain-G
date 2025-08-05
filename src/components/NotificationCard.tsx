@@ -79,7 +79,7 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
   };
 
 
-  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: id }) : 'baru saja';
+  const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { locale: id }) : 'baru saja';
 
   const senderProfileLink = `/user?id=${notification.sender.id}`;
 

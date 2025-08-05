@@ -25,6 +25,8 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     
     const videoRef = useRef<HTMLVideoElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const requestRef = useRef<number>();
+
 
     const currentStory = stories[storyIndex];
 
@@ -43,7 +45,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         }
     }, [storyIndex, stories.length, onClose]);
 
-
     const startTimer = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
         if (isPaused || !currentStory) return;
@@ -61,12 +62,14 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             video.addEventListener('timeupdate', onTimeUpdate);
             video.addEventListener('ended', onEnded);
             
-            video.play().catch(error => {
-                // Ignore AbortError which can happen if the user navigates away quickly
-                if (error.name !== 'AbortError') {
-                    console.error("Video play error:", error);
-                }
-            });
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Video play error:", error);
+                    }
+                });
+            }
 
             return () => {
                 video.removeEventListener('timeupdate', onTimeUpdate);
@@ -77,6 +80,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             const startTime = Date.now() - (progress / 100) * STORY_DURATION;
 
             const tick = () => {
+                if (isPaused) return;
                 const elapsedTime = Date.now() - startTime;
                 const newProgress = (elapsedTime / STORY_DURATION) * 100;
 
@@ -85,10 +89,10 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                     goToNextStory();
                 } else {
                     setProgress(newProgress);
-                    timerRef.current = setTimeout(tick, 50);
+                    requestRef.current = requestAnimationFrame(tick);
                 }
             };
-            timerRef.current = setTimeout(tick, 50);
+            requestRef.current = requestAnimationFrame(tick);
         }
     }, [currentStory, isPaused, goToNextStory, progress]);
 
@@ -98,8 +102,15 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     }, [storyIndex]);
 
     useEffect(() => {
-      const cleanup = startTimer();
-      return cleanup;
+        const cleanup = startTimer();
+        return () => {
+            if (requestRef.current) {
+                cancelAnimationFrame(requestRef.current);
+            }
+            if (cleanup) {
+                cleanup();
+            }
+        };
     }, [storyIndex, isPaused, startTimer]);
 
 
@@ -109,11 +120,14 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             if (isPaused) {
                 video.pause();
             } else {
-                video.play().catch(error => {
-                    if (error.name !== 'AbortError') {
-                        console.error("Video play error on resume:", error);
-                    }
-                });
+                 const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        if (error.name !== 'AbortError') {
+                            console.error("Video play error on resume:", error);
+                        }
+                    });
+                }
             }
         }
     }, [isPaused]);
@@ -128,6 +142,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
 
     const handleInteractionStart = () => setIsPaused(true);
     const handleInteractionEnd = () => {
+        // Use a small timeout to distinguish between a tap and a hold
         setTimeout(() => setIsPaused(false), 100);
     }
     
@@ -143,12 +158,12 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             goToNextStory();
         }
     };
-
+    
     if (!currentStory) {
         return null;
     }
     
-    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { addSuffix: true, locale: id }) : 'baru saja';
+    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { locale: id }) : 'baru saja';
     const profileLink = `/user?id=${currentStory.author.id}`;
 
 
@@ -160,7 +175,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             {currentStory.mediaType === 'image' ? (
                 <img src={currentStory.mediaUrl} className="w-full h-full object-contain" alt={`Story by ${currentStory.author.name}`} />
             ): (
-                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline onLoadedData={startTimer} />
+                <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline />
             )}
             
             <div 
@@ -179,7 +194,7 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                         <div key={idx} className="relative w-full h-1 bg-white/30 rounded-full overflow-hidden">
                            {idx < storyIndex && <div className="absolute top-0 left-0 h-full w-full bg-white" />}
                            {idx === storyIndex && (
-                                <Progress value={progress} className="w-full h-full bg-white !p-0" />
+                                <Progress value={progress} className="w-full h-full bg-white !p-0 transition-all duration-100 linear" />
                            )}
                         </div>
                     ))}

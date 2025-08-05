@@ -9,7 +9,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Share2, CheckCircle } from 'lucide-react';
+import { Heart, MessageCircle, Share2, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -32,7 +32,7 @@ export function PostCard({ post }: { post: Post }) {
               <p className="font-semibold text-card-foreground hover:underline">{post.author.name}</p>
             </Link>
             {post.author.isVerified && (
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <BadgeCheck className="h-4 w-4 text-primary" />
             )}
           </div>
           <Link href={profileLink}>

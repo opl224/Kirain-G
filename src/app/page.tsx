@@ -15,12 +15,17 @@ export default function HomePage() {
 
   useEffect(() => {
     // Clear the new posts indicator when visiting the home page
-    const lastSeenPost = localStorage.getItem('lastSeenPostTimestamp');
-    if (posts.length > 0 && (!lastSeenPost || posts[0].createdAt.toMillis() > Number(lastSeenPost))) {
-        localStorage.setItem('lastSeenPostTimestamp', posts[0].createdAt.toMillis().toString());
-    }
     localStorage.setItem('hasNewPosts', 'false');
     window.dispatchEvent(new Event('storageUpdated'));
+
+    // After clearing, set the latest post timestamp
+    if (posts.length > 0) {
+      const lastSeenPostTimestamp = localStorage.getItem('lastSeenPostTimestamp');
+      const latestPostTimestamp = posts[0].createdAt.toMillis();
+      if (!lastSeenPostTimestamp || latestPostTimestamp > Number(lastSeenPostTimestamp)) {
+        localStorage.setItem('lastSeenPostTimestamp', latestPostTimestamp.toString());
+      }
+    }
   }, [posts]);
 
   useEffect(() => {

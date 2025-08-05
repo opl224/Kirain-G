@@ -32,8 +32,10 @@ export default function NotificationsPage() {
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const hasUnread = snapshot.docs.some(doc => !doc.data().read);
-        localStorage.setItem('hasUnreadNotifications', hasUnread.toString());
-        window.dispatchEvent(new Event('storageUpdated'));
+        if (hasUnread) {
+          localStorage.setItem('hasUnreadNotifications', 'true');
+          window.dispatchEvent(new Event('storageUpdated'));
+        }
       });
 
       return () => unsubscribe();
@@ -70,6 +72,9 @@ export default function NotificationsPage() {
 
           // Commit the batch update
           await batch.commit();
+          // After clearing, make sure the indicator is off
+          localStorage.setItem('hasUnreadNotifications', 'false');
+          window.dispatchEvent(new Event('storageUpdated'));
 
         } catch (error) {
             console.error("Error fetching notifications: ", error);

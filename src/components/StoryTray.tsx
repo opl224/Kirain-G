@@ -63,11 +63,12 @@ export default function StoryTray({ groupedStories: initialGroupedStories, isLoa
   };
 
   const closeViewer = () => {
-    if (selectedAuthorId && groupedStories[selectedAuthorId]?.every(story => viewedAuthors.has(story.author.id))) {
-        setViewedAuthors(prev => new Set(prev).add(selectedAuthorId));
-    }
     setSelectedAuthorId(null);
   };
+
+  const handleAllStoriesViewed = (authorId: string) => {
+    setViewedAuthors(prev => new Set(prev).add(authorId));
+  }
   
   const handleStoryDelete = (storyId: string, authorId: string) => {
     setGroupedStories(prev => {
@@ -116,6 +117,7 @@ export default function StoryTray({ groupedStories: initialGroupedStories, isLoa
                     stories={storiesForSelectedUser} 
                     onClose={closeViewer} 
                     onStoryDelete={handleStoryDelete}
+                    onAllStoriesViewed={handleAllStoriesViewed}
                 />
             }
         </DialogContent>

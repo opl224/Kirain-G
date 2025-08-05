@@ -31,11 +31,12 @@ interface StoryViewerProps {
     stories: Story[];
     onClose: () => void;
     onStoryDelete?: (storyId: string, authorId: string) => void;
+    onAllStoriesViewed: (authorId: string) => void;
 }
 
 const STORY_DURATION = 5000; // 5 seconds for images
 
-export default function StoryViewer({ stories, onClose, onStoryDelete }: StoryViewerProps) {
+export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStoriesViewed }: StoryViewerProps) {
     const [storyIndex, setStoryIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     const [isMuted, setIsMuted] = useState(true);
@@ -56,9 +57,10 @@ export default function StoryViewer({ stories, onClose, onStoryDelete }: StoryVi
         if (storyIndex < stories.length - 1) {
             setStoryIndex(prevIndex => prevIndex + 1);
         } else {
+            onAllStoriesViewed(currentStory.author.id);
             onClose();
         }
-    }, [storyIndex, stories.length, onClose]);
+    }, [storyIndex, stories, onClose, onAllStoriesViewed, currentStory]);
 
     const goToPrevStory = () => {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));

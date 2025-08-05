@@ -31,19 +31,24 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     const currentStory = stories[storyIndex];
 
     const goToNextStory = useCallback(() => {
-        setStoryIndex(prevIndex => prevIndex + 1);
-    }, []);
+        if (storyIndex < stories.length - 1) {
+            setStoryIndex(prevIndex => prevIndex + 1);
+        } else {
+            onClose();
+        }
+    }, [storyIndex, stories.length, onClose]);
 
     const goToPrevStory = () => {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
 
-    // Effect to handle closing the viewer when stories end
+     // Reset progress only when story index changes
     useEffect(() => {
-        if (storyIndex >= stories.length) {
-            onClose();
+        setProgress(0);
+        if (videoRef.current) {
+            videoRef.current.currentTime = 0;
         }
-    }, [storyIndex, stories.length, onClose]);
+    }, [storyIndex]);
 
     const startTimer = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -77,11 +82,17 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             };
 
         } else {
-            const startTime = Date.now() - (progress / 100) * STORY_DURATION;
+            let start = Date.now() - (progress / 100) * STORY_DURATION;
 
             const tick = () => {
-                if (isPaused) return;
-                const elapsedTime = Date.now() - startTime;
+                if (isPaused) {
+                    // When unpausing, we need to reset the start time
+                    start = Date.now() - (progress / 100) * STORY_DURATION;
+                    requestRef.current = requestAnimationFrame(tick);
+                    return;
+                }
+
+                const elapsedTime = Date.now() - start;
                 const newProgress = (elapsedTime / STORY_DURATION) * 100;
 
                 if (newProgress >= 100) {
@@ -96,10 +107,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         }
     }, [currentStory, isPaused, goToNextStory, progress]);
 
-
-    useEffect(() => {
-        setProgress(0);
-    }, [storyIndex]);
 
     useEffect(() => {
         const cleanup = startTimer();
@@ -163,7 +170,11 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
         return null;
     }
     
-    const timeAgo = currentStory.createdAt ? formatDistanceToNow(currentStory.createdAt.toDate(), { locale: id }) : 'baru saja';
+    let timeAgo = 'baru saja';
+    if (currentStory.createdAt) {
+        let formattedTime = formatDistanceToNow(currentStory.createdAt.toDate(), { locale: id, addSuffix: false });
+        timeAgo = formattedTime.replace("kurang dari ", "");
+    }
     const profileLink = `/user?id=${currentStory.author.id}`;
 
 
@@ -210,11 +221,11 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                     </Link>
                      <div className="flex items-center gap-4">
                         {currentStory.mediaType === 'video' && (
-                            <button onClick={toggleMute} className="text-white">
+                            <button onClick={toggleMute} className="text-white z-30">
                                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                             </button>
                         )}
-                        <button onClick={onClose} className="text-white">
+                        <button onClick={onClose} className="text-white z-30">
                             <X className="w-6 h-6" />
                         </button>
                     </div>

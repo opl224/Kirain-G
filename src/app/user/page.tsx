@@ -20,9 +20,12 @@ import {
   addDoc,
   serverTimestamp,
   deleteDoc,
+  limit, 
+  startAfter,
+  type QueryDocumentSnapshot
 } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
-import { ArrowLeft, Loader, BadgeCheck, Lock } from 'lucide-react';
+import { ArrowLeft, Loader, BadgeCheck, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -32,6 +35,8 @@ import TruncatedText from '@/components/TruncatedText';
 import UserListDialog from '@/components/UserListDialog';
 import { cn } from '@/lib/utils';
 import PageLoader from '@/components/PageLoader';
+
+const POSTS_PER_PAGE = 10;
 
 function StatItem({ label, value, isDisabled = false }: { label: string; value: number | string, isDisabled?: boolean }) {
   return (
@@ -54,10 +59,56 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
   const [followIsLoading, setFollowIsLoading] = useState(false);
+  const [postsLastVisible, setPostsLastVisible] = useState<QueryDocumentSnapshot | null>(null);
+  const [postsHaveMore, setPostsHaveMore] = useState(true);
+  const [isFetchingMorePosts, setIsFetchingMorePosts] = useState(false);
+
 
   const { toast } = useToast();
   
   const canViewProfile = userProfile && (!userProfile.isPrivate || isFollowing);
+
+  const fetchUserPosts = async (initialLoad = false) => {
+    if (!userId) return;
+     if (!canViewProfile && !initialLoad) return;
+
+
+    if (initialLoad) {
+        // Full page loader is active
+    } else {
+        setIsFetchingMorePosts(true);
+    }
+
+    try {
+        const postsCollection = collection(db, 'posts');
+        let q = query(
+            postsCollection, 
+            where('author.id', '==', userId), 
+            orderBy('createdAt', 'desc'),
+            limit(POSTS_PER_PAGE)
+        );
+
+        if (!initialLoad && postsLastVisible) {
+            q = query(q, startAfter(postsLastVisible));
+        }
+        
+        const postSnapshot = await getDocs(q);
+        const newPosts = postSnapshot.docs.map(doc => ({ ...doc.data() as Post, id: doc.id }));
+        
+        setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+        setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
+        
+        setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+
+    } catch (error) {
+        console.error("Error fetching user posts: ", error);
+    } finally {
+        if (!initialLoad) {
+            setIsFetchingMorePosts(false);
+        }
+    }
+  };
+
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -81,28 +132,15 @@ export default function UserProfilePage() {
         if (userDocSnap.exists()) {
           const profileData = { id: userDocSnap.id, ...userDocSnap.data() } as User;
           setUserProfile(profileData);
-          if (authUser) {
-            const localIsFollowing = profileData.followers?.includes(authUser.uid);
-            const localHasRequested = profileData.followRequests?.includes(authUser.uid);
-            setIsFollowing(!!localIsFollowing);
-            setHasRequested(!!localHasRequested);
-          }
           
+          const localIsFollowing = authUser ? profileData.followers?.includes(authUser.uid) : false;
+          const localHasRequested = authUser ? profileData.followRequests?.includes(authUser.uid) : false;
+          setIsFollowing(!!localIsFollowing);
+          setHasRequested(!!localHasRequested);
 
           // Fetch user posts only if profile is not private or user is a follower
-          if (!profileData.isPrivate || (authUser && profileData.followers?.includes(authUser.uid))) {
-            const postsCollection = collection(db, 'posts');
-            const q = query(
-              postsCollection,
-              where('author.id', '==', userId),
-              orderBy('createdAt', 'desc')
-            );
-            const postSnapshot = await getDocs(q);
-            const postsData = postSnapshot.docs.map((doc) => ({
-              ...(doc.data() as Post),
-              id: doc.id,
-            }));
-            setUserPosts(postsData);
+          if (!profileData.isPrivate || localIsFollowing) {
+            await fetchUserPosts(true);
           }
         } else {
           console.log('Pengguna tidak ditemukan!');
@@ -206,6 +244,8 @@ export default function UserProfilePage() {
 
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
         setIsFollowing(true);
+        // If we are now following, fetch their posts
+        fetchUserPosts(true);
         toast({ title: `Anda sekarang mengikuti @${userProfile.handle}` });
       }
     } catch (error: any) {
@@ -228,6 +268,7 @@ export default function UserProfilePage() {
 
   const handlePostDelete = (postId: string) => {
     setUserPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+     setUserProfile(p => p ? {...p, stats: {...p.stats, posts: p.stats.posts - 1}} : null);
   };
 
   if (isLoading || authIsLoading || !userProfile) {
@@ -257,7 +298,7 @@ export default function UserProfilePage() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 flex justify-around">
-          <StatItem label="Postingan" value={canViewProfile ? userPosts.length : 0} />
+          <StatItem label="Postingan" value={userProfile.stats.posts} />
           <UserListDialog userIds={userProfile.followers || []} title="Pengikut" disabled={!canViewProfile}>
             <StatItem label="Pengikut" value={userProfile.stats.followers} isDisabled={!canViewProfile} />
           </UserListDialog>
@@ -293,15 +334,31 @@ export default function UserProfilePage() {
           Postingan
         </h2>
         {canViewProfile ? (
+          <>
             <div className="space-y-6">
-            {userPosts.length > 0 ? (
-                userPosts.map((post) => <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />)
-            ) : (
-                <p className="text-center text-muted-foreground py-8">
-                Belum ada postingan.
-                </p>
-            )}
+              {userPosts.length > 0 ? (
+                  userPosts.map((post) => <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />)
+              ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                  Belum ada postingan.
+                  </p>
+              )}
             </div>
+            {postsHaveMore && (
+              <div className="mt-8 text-center">
+                <Button onClick={() => fetchUserPosts(false)} disabled={isFetchingMorePosts}>
+                  {isFetchingMorePosts ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Memuat...
+                    </>
+                  ) : (
+                    'Muat Lebih Banyak'
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
             <div className="text-center py-10 border rounded-lg bg-muted/50">
                 <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -313,5 +370,3 @@ export default function UserProfilePage() {
     </div>
   );
 }
-
-    

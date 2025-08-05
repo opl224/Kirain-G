@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
-import { Camera, Loader, Menu, BadgeCheck, Lock } from 'lucide-react';
+import { Camera, Loader, Menu, BadgeCheck, Lock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -27,7 +27,24 @@ function StatItem({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export default function ProfileDisplay({ user, posts, onPostDelete }: { user: User, posts: Post[], onPostDelete?: (postId: string) => void }) {
+interface ProfileDisplayProps {
+  user: User;
+  posts: Post[];
+  onPostDelete?: (postId: string) => void;
+  hasMorePosts?: boolean;
+  isFetchingMorePosts?: boolean;
+  onLoadMorePosts?: () => void;
+}
+
+
+export default function ProfileDisplay({ 
+  user, 
+  posts, 
+  onPostDelete,
+  hasMorePosts = false,
+  isFetchingMorePosts = false,
+  onLoadMorePosts
+ }: ProfileDisplayProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(user);
   const [isUploading, setIsUploading] = useState(false);
@@ -178,9 +195,22 @@ export default function ProfileDisplay({ user, posts, onPostDelete }: { user: Us
             <p className="text-center text-muted-foreground py-8">Belum ada postingan.</p>
           )}
         </div>
+
+        {hasMorePosts && (
+            <div className="mt-8 text-center">
+              <Button onClick={onLoadMorePosts} disabled={isFetchingMorePosts}>
+                {isFetchingMorePosts ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Memuat...
+                  </>
+                ) : (
+                  'Muat Lebih Banyak'
+                )}
+              </Button>
+            </div>
+          )}
       </div>
     </div>
   );
 }
-
-    

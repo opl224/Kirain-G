@@ -4,16 +4,62 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit, startAfter, type QueryDocumentSnapshot } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
 import ProfileDisplay from '@/components/ProfileDisplay';
 import PageLoader from '@/components/PageLoader';
+
+const POSTS_PER_PAGE = 10;
 
 export default function ProfilePage() {
   const { user: authUser, isLoading: authIsLoading } = useAuth();
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [postsLastVisible, setPostsLastVisible] = useState<QueryDocumentSnapshot | null>(null);
+  const [postsHaveMore, setPostsHaveMore] = useState(true);
+  const [isFetchingMorePosts, setIsFetchingMorePosts] = useState(false);
+
+
+  const fetchUserPosts = async (initialLoad = false) => {
+      if (!authUser) return;
+
+      if (initialLoad) {
+          // Full page loader is already active
+      } else {
+          setIsFetchingMorePosts(true);
+      }
+
+      try {
+          const postsCollection = collection(db, 'posts');
+          let q = query(
+              postsCollection, 
+              where('author.id', '==', authUser.uid), 
+              orderBy('createdAt', 'desc'),
+              limit(POSTS_PER_PAGE)
+          );
+
+          if (!initialLoad && postsLastVisible) {
+              q = query(q, startAfter(postsLastVisible));
+          }
+          
+          const postSnapshot = await getDocs(q);
+          const newPosts = postSnapshot.docs.map(doc => ({ ...doc.data() as Post, id: doc.id }));
+          
+          setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+          setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
+          
+          setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+
+      } catch (error) {
+          console.error("Error fetching user posts: ", error);
+      } finally {
+           if (!initialLoad) {
+              setIsFetchingMorePosts(false);
+           }
+      }
+  };
+
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -35,12 +81,8 @@ export default function ProfilePage() {
           console.log("No such user!");
         }
 
-        // Fetch user posts
-        const postsCollection = collection(db, 'posts');
-        const q = query(postsCollection, where('author.id', '==', authUser.uid), orderBy('createdAt', 'desc'));
-        const postSnapshot = await getDocs(q);
-        const postsData = postSnapshot.docs.map(doc => ({ ...doc.data() as Post, id: doc.id }));
-        setUserPosts(postsData);
+        // Fetch initial posts
+        await fetchUserPosts(true);
 
       } catch (error) {
         console.error("Error fetching profile data: ", error);
@@ -72,7 +114,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <ProfileDisplay user={userProfile} posts={userPosts} onPostDelete={handlePostDelete} />
+    <ProfileDisplay 
+      user={userProfile} 
+      posts={userPosts} 
+      onPostDelete={handlePostDelete}
+      hasMorePosts={postsHaveMore}
+      isFetchingMorePosts={isFetchingMorePosts}
+      onLoadMorePosts={() => fetchUserPosts(false)}
+    />
   );
 }
 

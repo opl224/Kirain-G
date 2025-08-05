@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Capacitor project.
+ *
+ * Copyright (c) 2017-present Drifty Co.
+ *
+ * Capacitor is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT License.
+ *
+ * A copy of the MIT License should have been received along with this
+ * software. If not, see <https://opensource.org/licenses/MIT>.
+ */
 
 apply plugin: 'com.android.library'
 
@@ -17,24 +28,22 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
     libraryVariants.all { variant ->
         variant.outputs.all {
             outputFileName = "capacitor-android.aar"
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.appcompat:appcompat:$rootProject.ext.androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$rootProject.ext.androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$rootProject.ext.coreSplashScreenVersion"
-    implementation "androidx.webkit:webkit:$rootProject.ext.androidxWebkitVersion"
-    testImplementation "junit:junit:$rootProject.ext.junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$rootProject.ext.androidxJunitVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$rootProject.ext.androidxEspressoCoreVersion"
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.webkit:webkit:$androidxWebkitVersion"
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
 }

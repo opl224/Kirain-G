@@ -1,15 +1,14 @@
 
 'use client';
 
-import { useId } from 'react';
-
 interface PrivacyLockProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }
 
 export function PrivacyLock({ checked, onCheckedChange }: PrivacyLockProps) {
-  const id = useId();
+  // Menggunakan ID statis agar cocok dengan selektor CSS
+  const id = "privacy-lock";
 
   return (
     <>
@@ -18,7 +17,7 @@ export function PrivacyLock({ checked, onCheckedChange }: PrivacyLockProps) {
         id={id}
         checked={checked}
         onChange={(e) => onCheckedChange(e.target.checked)}
-        className="hidden" // Replaced #lock selector
+        className="hidden"
       />
       <label htmlFor={id} className="lock-label">
         <span className="lock-wrapper">

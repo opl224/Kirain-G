@@ -220,7 +220,7 @@ input:checked + .slider:before {
 }
 
 /* Privacy Lock Toggle */
-#lock {
+#privacy-lock {
   display: none;
 }
 .lock-label {
@@ -257,11 +257,11 @@ input:checked + .slider:before {
 .lock-body {
   width: 15px;
 }
-#lock:checked + .lock-label .lock-wrapper .shackle {
+#privacy-lock:checked + .lock-label .lock-wrapper .shackle {
   transform: rotateY(150deg) translateX(3px);
   transform-origin: right;
 }
-#lock:checked + .lock-label {
+#privacy-lock:checked + .lock-label {
   background-color: hsl(var(--primary));
 }
 .lock-label:active {

@@ -19,6 +19,8 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, increment, addDoc, collection, serverTimestamp, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 export function PostCard({ post }: { post: Post }) {
   const { user } = useAuth();
@@ -149,6 +151,7 @@ export function PostCard({ post }: { post: Post }) {
 
 
   const profileLink = user && user.uid === post.author.id ? '/profile' : `/user?id=${post.author.id}`;
+  const postDate = post.createdAt ? format(post.createdAt.toDate(), 'dd MMM yyyy', { locale: id }) : '';
 
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
@@ -168,9 +171,17 @@ export function PostCard({ post }: { post: Post }) {
               <BadgeCheck className="h-4 w-4 text-primary" />
             )}
           </div>
-          <Link href={profileLink}>
-            <p className="text-xs text-muted-foreground hover:underline">@{post.author.handle}</p>
-          </Link>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Link href={profileLink}>
+              <span className="hover:underline">@{post.author.handle}</span>
+            </Link>
+            {postDate && (
+              <>
+                <span>·</span>
+                <span>{postDate}</span>
+              </>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">

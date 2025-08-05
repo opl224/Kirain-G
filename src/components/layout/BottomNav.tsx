@@ -4,30 +4,31 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { Home, PlusSquare, Bell, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   {
     href: '/',
-    icon: 'home',
+    Icon: Home,
     label: 'Beranda',
     storageKey: 'hasNewPosts',
   },
   {
     href: '/post',
-    icon: 'add',
+    Icon: PlusSquare,
     label: 'Posting',
   },
   {
     href: '/notifications',
-    icon: 'bell',
+    Icon: Bell,
     label: 'Notifikasi',
     storageKey: 'hasUnreadNotifications',
   },
   {
     href: '/profile',
-    icon: 'profile',
+    Icon: User,
     label: 'Profil',
   },
 ];
@@ -74,7 +75,6 @@ export default function BottomNav() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
-            const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
             const showIndicator = item.storageKey ? indicators[item.storageKey] : false;
 
             return (
@@ -86,15 +86,10 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <div className="relative w-6 h-6">
-                    <Image
-                      src={iconSrc}
-                      alt={item.label}
-                      fill
-                      className="transition-transform duration-200"
-                    />
+                  <div className="relative">
+                    <item.Icon className={`h-6 w-6 transition-transform duration-200 ${isActive ? 'fill-current' : ''}`} />
                     {showIndicator && (
-                        <div className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-card" />
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card" />
                     )}
                   </div>
                   {/* The text label is hidden for a cleaner look, but can be re-enabled by removing sr-only */}

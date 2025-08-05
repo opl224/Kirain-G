@@ -18,7 +18,6 @@ const TruncatedText = ({ text, lineClamp = 2, className }: TruncatedTextProps) =
   const checkOverflow = useCallback(() => {
     const element = textRef.current;
     if (element) {
-      // Check if the content is taller than its container
       const isClamped = element.scrollHeight > element.clientHeight;
       setIsOverflowing(isClamped);
     }
@@ -46,8 +45,8 @@ const TruncatedText = ({ text, lineClamp = 2, className }: TruncatedTextProps) =
     <div>
       <p
         ref={textRef}
-        className={cn(className)}
-        style={isTruncated ? lineClampStyle : undefined}
+        className={cn('whitespace-pre-wrap', className)}
+        style={isTruncated ? lineClampStyle : {}}
       >
         {text}
       </p>

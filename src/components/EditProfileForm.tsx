@@ -33,7 +33,7 @@ const formSchema = z.object({
     .max(10, { message: 'Username tidak boleh lebih dari 10 karakter.'})
     .regex(/^[a-zA-Z0-9_]+$/, 'Username hanya boleh berisi huruf, angka, dan garis bawah.'),
   bio: z.string()
-    .max(250, { message: 'Bio tidak boleh lebih dari 250 karakter.' })
+    .max(50, { message: 'Bio tidak boleh lebih dari 50 karakter.' })
     .optional(),
 });
 

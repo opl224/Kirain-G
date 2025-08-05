@@ -47,8 +47,8 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       </div>
 
       <div className="mt-6">
-        <TruncatedText text={currentUser.name} lineClamp={2} className="text-xl font-bold" />
-        <TruncatedText text={`@${currentUser.handle}`} lineClamp={2} className="text-muted-foreground" />
+        <p className="text-xl font-bold truncate">{currentUser.name}</p>
+        <p className="text-muted-foreground truncate">@{currentUser.handle}</p>
         {currentUser.bio && <TruncatedText text={currentUser.bio} lineClamp={2} className="mt-2 text-foreground/90" />}
       </div>
       

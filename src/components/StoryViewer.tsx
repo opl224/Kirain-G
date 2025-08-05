@@ -31,8 +31,8 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     const profileLink = `/user?id=${currentStory.author.id}`;
 
     const goToNextStory = useCallback(() => {
-        setStoryIndex(prevIndex => Math.min(prevIndex + 1, stories.length));
-    }, [stories.length]);
+        setStoryIndex(prevIndex => prevIndex + 1);
+    }, []);
 
     const goToPrevStory = () => {
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
@@ -64,7 +64,14 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             };
             video.addEventListener('timeupdate', onTimeUpdate);
             video.addEventListener('ended', onEnded);
-            video.play().catch(console.error);
+            
+            // Play returns a promise, which can be interrupted.
+            video.play().catch(error => {
+                // Ignore interruption errors, as they are expected when navigating quickly.
+                if (error.name !== 'AbortError') {
+                    console.error("Video play error:", error);
+                }
+            });
 
             return () => {
                 video.removeEventListener('timeupdate', onTimeUpdate);
@@ -85,15 +92,14 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
  
              timerRef.current = setTimeout(goToNextStory, STORY_DURATION);
         }
-
     }, [currentStory, isPaused, goToNextStory]);
 
 
     useEffect(() => {
-      // Reset and start timer when storyIndex or isPaused changes
+      // Reset and start timer when storyIndex changes
       const cleanup = startTimer();
       return cleanup;
-    }, [storyIndex, isPaused, startTimer]);
+    }, [storyIndex, startTimer]);
 
 
     useEffect(() => {
@@ -102,7 +108,11 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
             if (isPaused) {
                 video.pause();
             } else {
-                video.play().catch(console.error);
+                video.play().catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.error("Video play error on resume:", error);
+                    }
+                });
             }
         }
     }, [isPaused]);
@@ -124,12 +134,18 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     
     const handleClickNavigation = (e: React.MouseEvent<HTMLDivElement>) => {
         if (isPaused) return; // Don't navigate if paused by holding
-        const clickX = e.clientX;
-        // Use clientWidth of the target div for more reliable width calculation
+        
+        // Reset pause state to prevent conflicts when navigating
+        setIsPaused(false);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+        const clickX = e.nativeEvent.offsetX;
         const screenWidth = e.currentTarget.clientWidth;
+
         if (clickX < screenWidth / 3) {
             goToPrevStory();
-        } else { // Let the right 2/3 of screen go to next
+        } else { 
             goToNextStory();
         }
     };
@@ -142,11 +158,6 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
     return (
         <div 
             className="relative w-full h-full rounded-lg overflow-hidden flex flex-col bg-black select-none"
-            onMouseDown={handleInteractionStart}
-            onMouseUp={handleInteractionEnd}
-            onMouseLeave={handleInteractionEnd}
-            onTouchStart={handleInteractionStart}
-            onTouchEnd={handleInteractionEnd}
         >
             <div className="absolute top-0 left-0 right-0 p-4 z-10" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
                 <div className="flex items-center gap-1 w-full">
@@ -170,23 +181,26 @@ export default function StoryViewer({ stories, onClose }: StoryViewerProps) {
                     </Link>
                      <div className="flex items-center gap-4">
                         {currentStory.mediaType === 'video' && (
-                            <button onClick={toggleMute} className="text-white">
+                            <button onClick={toggleMute} className="text-white z-30">
                                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                             </button>
                         )}
-                        <button onClick={onClose} className="text-white">
+                        <button onClick={onClose} className="text-white z-30">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
                 </div>
             </div>
             
-            <div 
-                className="absolute inset-0 z-20 flex w-full h-full"
+            {/* Click handlers are now on a single div over the content */}
+            <div className="absolute inset-0 z-20 flex"
+                onMouseDown={handleInteractionStart}
+                onMouseUp={handleInteractionEnd}
+                onMouseLeave={handleInteractionEnd}
+                onTouchStart={handleInteractionStart}
+                onTouchEnd={handleInteractionEnd}
                 onClick={handleClickNavigation}
             >
-                <div className="w-1/3 h-full"/>
-                <div className="w-2/3 h-full"/>
             </div>
             
 

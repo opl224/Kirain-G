@@ -5,7 +5,7 @@ import { Story } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StoryViewer from './StoryViewer';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +40,17 @@ const StoryBubbleSkeleton = () => (
 
 export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps) {
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
-  const [viewedAuthors, setViewedAuthors] = useState<Set<string>>(new Set());
+  const [viewedAuthors, setViewedAuthors] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') {
+      return new Set();
+    }
+    const savedViewed = localStorage.getItem('viewedStoryAuthors');
+    return savedViewed ? new Set(JSON.parse(savedViewed)) : new Set();
+  });
+
+  useEffect(() => {
+    localStorage.setItem('viewedStoryAuthors', JSON.stringify(Array.from(viewedAuthors)));
+  }, [viewedAuthors]);
 
 
   const handleSelectStory = (authorId: string) => {

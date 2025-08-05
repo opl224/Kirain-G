@@ -89,7 +89,7 @@ export default function BottomNav() {
             const isActive =
               item.href === '/'
                 ? pathname === '/'
-                : pathname.startsWith(item.href);
+                : pathname === item.href;
 
             const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
             const showIndicator = item.storageKey

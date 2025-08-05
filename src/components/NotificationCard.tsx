@@ -1,29 +1,34 @@
 
-import type { Notification, User } from '@/lib/types';
+'use client';
+
+import type { Notification } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
-import { Heart, UserPlus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Heart, UserPlus, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import Link from 'next/link';
 
-export function NotificationCard({
-  notification,
-}: {
+
+interface NotificationCardProps {
   notification: Notification;
-}) {
+  onUpdate: (id: string, updates: Partial<Notification>) => void;
+  onRemove: (id: string) => void;
+  currentUserId?: string;
+}
 
-  // A dummy user for display purposes until we have real users in notifications
-  const dummyUser: User = {
-    id: 'dummy-user',
-    name: 'NotaSphere User',
-    handle: 'dummynota',
-    avatarUrl: 'https://placehold.co/100x100.png',
-    bio: '',
-    stats: { posts: 0, followers: 0, following: 0 }
-  }
-  const user = notification.user || dummyUser;
+
+export function NotificationCard({ notification, onRemove, currentUserId }: NotificationCardProps) {
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
+  const isSuperUser = currentUserId === superUserId;
+  const isVerificationRequest = notification.type === 'verification_request';
 
   const getIcon = () => {
     switch (notification.type) {
@@ -31,34 +36,90 @@ export function NotificationCard({
         return <Heart className="h-5 w-5 text-red-500" />;
       case 'follow':
         return <UserPlus className="h-5 w-5 text-primary" />;
+      case 'verification_request':
+        return <CheckCircle className="h-5 w-5 text-blue-500" />;
       default:
         return null;
     }
   };
 
+  const handleApprove = async () => {
+    setIsProcessing(true);
+    try {
+      // Update the user's document to set isVerified to true
+      const userToVerifyRef = doc(db, 'users', notification.sender.id);
+      await updateDoc(userToVerifyRef, { isVerified: true });
+      
+      // Delete the notification after it has been handled
+      const notifRef = doc(db, 'notifications', notification.id);
+      await deleteDoc(notifRef);
+
+      toast({ title: "User Verified", description: `${notification.sender.handle} is now verified.` });
+      
+      onRemove(notification.id);
+
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: "Error", description: error.message });
+      setIsProcessing(false);
+    }
+  };
+  
+  const handleDecline = async () => {
+    setIsProcessing(true);
+    try {
+        const notifRef = doc(db, 'notifications', notification.id);
+        await deleteDoc(notifRef);
+        toast({ title: "Request Declined" });
+        onRemove(notification.id);
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: "Error", description: error.message });
+        setIsProcessing(false);
+    }
+  };
+
+
   const timeAgo = notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : 'just now';
+
+  const senderProfileLink = `/user?id=${notification.sender.id}`;
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className="relative">
-           <Avatar>
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div className="absolute -bottom-1 -right-1 bg-background p-0.5 rounded-full">
-            {getIcon()}
-          </div>
+      <CardContent className="p-4 flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+            <Link href={senderProfileLink}>
+                <div className="relative">
+                    <Avatar>
+                        <AvatarImage src={notification.sender.avatarUrl} alt={notification.sender.name} />
+                        <AvatarFallback>{notification.sender.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 bg-background p-0.5 rounded-full">
+                        {getIcon()}
+                    </div>
+                </div>
+            </Link>
+            <div className="flex-grow">
+                <p className="text-sm">
+                    <Link href={senderProfileLink}>
+                        <span className="font-semibold hover:underline">{notification.sender.name}</span>
+                    </Link>
+                    {' '}
+                    {notification.content}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    {timeAgo}
+                </p>
+            </div>
         </div>
-        <div className="flex-grow">
-          <p className="text-sm">
-            <span className="font-semibold">{user.name}</span>{' '}
-            {notification.content}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {timeAgo}
-          </p>
-        </div>
+        {isSuperUser && isVerificationRequest && (
+            <div className="flex justify-end gap-2">
+                <Button size="sm" variant="outline" onClick={handleDecline} disabled={isProcessing}>
+                    Decline
+                </Button>
+                <Button size="sm" onClick={handleApprove} disabled={isProcessing}>
+                    Approve
+                </Button>
+            </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -9,7 +9,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -26,10 +26,15 @@ export function PostCard({ post }: { post: Post }) {
             <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </Link>
-        <div>
-          <Link href={profileLink}>
-            <p className="font-semibold text-card-foreground hover:underline">{post.author.name}</p>
-          </Link>
+        <div className="flex-grow">
+          <div className="flex items-center gap-1">
+            <Link href={profileLink}>
+              <p className="font-semibold text-card-foreground hover:underline">{post.author.name}</p>
+            </Link>
+            {post.author.isVerified && (
+              <CheckCircle className="h-4 w-4 text-primary" />
+            )}
+          </div>
           <Link href={profileLink}>
             <p className="text-xs text-muted-foreground hover:underline">@{post.author.handle}</p>
           </Link>

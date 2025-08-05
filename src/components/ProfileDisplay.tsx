@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
-import { Camera, Loader, Menu } from 'lucide-react';
+import { Camera, Loader, Menu, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -97,7 +97,10 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <div className="flex justify-between items-center mb-4 h-10">
-        <h2 className="text-xl font-bold">@{currentUser.handle}</h2>
+        <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">@{currentUser.handle}</h2>
+            {currentUser.isVerified && <CheckCircle className="h-5 w-5 text-primary" />}
+        </div>
         <Link href="/profile/settings" passHref>
           <Button variant="ghost" size="icon" className="focus-visible:ring-0 focus-visible:ring-offset-0">
             <Menu className="h-6 w-6" />
@@ -136,7 +139,7 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
       </div>
 
       <div className="mt-6">
-        <p className="text-xl font-bold" onClick={(e) => (e.target as HTMLElement).classList.toggle('truncate')}>{currentUser.name}</p>
+        <p className="text-xl font-bold">{currentUser.name}</p>
         {currentUser.bio && <TruncatedText text={currentUser.bio} lineClamp={2} className="mt-2 text-foreground/90" />}
       </div>
       

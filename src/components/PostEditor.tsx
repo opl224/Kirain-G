@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -111,6 +112,7 @@ export default function PostEditor() {
           name: userProfile.name,
           handle: userProfile.handle,
           avatarUrl: userProfile.avatarUrl,
+          isVerified: userProfile.isVerified || false,
         },
         content: values.content,
         tags: selectedTags,

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { db, auth } from '@/lib/firebase';
-import { doc, updateDoc, setDoc, collection, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, collection, getDoc, serverTimestamp, addDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import type { User } from '@/lib/types';
 
@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, ExternalLink, Loader, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Loader, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -24,6 +24,9 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+
+  const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
+  const isSuperUser = authUser?.uid === superUserId;
 
   useEffect(() => {
     if (authUser) {
@@ -77,17 +80,22 @@ export default function SettingsPage() {
 
   const handleVerificationRequest = async () => {
     if (!currentUser) return;
-    const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
     try {
-      const requestRef = doc(collection(db, 'verificationRequests'));
-      await setDoc(requestRef, {
-        userId: currentUser.id,
-        userName: currentUser.name,
-        userHandle: currentUser.handle,
-        status: 'pending',
-        requestedAt: new Date(),
-        superUserId: superUserId,
+      // Create a notification for the super user
+      await addDoc(collection(db, "notifications"), {
+        recipientId: superUserId,
+        sender: {
+          id: currentUser.id,
+          name: currentUser.name,
+          handle: currentUser.handle,
+          avatarUrl: currentUser.avatarUrl,
+        },
+        type: 'verification_request',
+        content: `meminta verifikasi akun.`,
+        read: false,
+        createdAt: serverTimestamp(),
       });
+      
       toast({
         title: 'Permintaan Terkirim',
         description: 'Permintaan verifikasi Anda telah dikirim ke super user.',
@@ -100,6 +108,7 @@ export default function SettingsPage() {
       });
     }
   };
+
 
   if (isLoading || authIsLoading) {
     return (
@@ -167,10 +176,14 @@ export default function SettingsPage() {
                   onCheckedChange={handlePrivacyChange}
                 />
              </SettingItem>
-             <Separator/>
-             <SettingItem>
-                <button onClick={handleVerificationRequest} className="text-base w-full text-left">Minta Verified</button>
-             </SettingItem>
+             {!isSuperUser && (
+                <>
+                    <Separator/>
+                    <SettingItem>
+                        <button onClick={handleVerificationRequest} className="text-base w-full text-left">Minta Verified</button>
+                    </SettingItem>
+                </>
+             )}
           </CardContent>
         </Card>
         

@@ -8,9 +8,10 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import type { Notification } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function NotificationsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authIsLoading } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,19 +19,38 @@ export default function NotificationsPage() {
     if (user) {
       const fetchNotifications = async () => {
         setIsLoading(true);
-        // This is a placeholder for fetching real notifications for the user
-        // In a real app, you would have a 'notifications' collection
-        // and query for notifications where `userId === user.uid`
-        console.log("Fetching notifications for user:", user.uid);
-        
-        // Since we don't have a real notifications system, we'll show an empty state.
-        setNotifications([]); 
-        
-        setIsLoading(false);
+        try {
+          const notificationsCollection = collection(db, 'notifications');
+          const q = query(
+            notificationsCollection,
+            where('recipientId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+          );
+          const querySnapshot = await getDocs(q);
+          const notificationsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Notification[];
+          setNotifications(notificationsData);
+        } catch (error) {
+            console.error("Error fetching notifications: ", error);
+        } finally {
+            setIsLoading(false);
+        }
       };
       fetchNotifications();
+    } else if (!authIsLoading) {
+        setIsLoading(false);
     }
-  }, [user]);
+  }, [user, authIsLoading]);
+  
+  const onNotificationUpdate = (notificationId: string, updates: Partial<Notification>) => {
+    setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, ...updates } : n));
+  };
+  
+  const onNotificationRemove = (notificationId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+  }
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
@@ -40,11 +60,21 @@ export default function NotificationsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-center text-muted-foreground">Loading notifications...</p>
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
       ) : notifications.length > 0 ? (
         <div className="space-y-4">
           {notifications.map((notification) => (
-            <NotificationCard key={notification.id} notification={notification} />
+            <NotificationCard 
+              key={notification.id} 
+              notification={notification}
+              onUpdate={onNotificationUpdate}
+              onRemove={onNotificationRemove}
+              currentUserId={user?.uid}
+            />
           ))}
         </div>
       ) : (

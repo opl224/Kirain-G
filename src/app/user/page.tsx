@@ -19,8 +19,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import type { User, Post } from '@/lib/types';
-import ProfileDisplay from '@/components/ProfileDisplay';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -170,7 +169,10 @@ export default function UserProfilePage() {
          <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-bold">@{userProfile.handle}</h2>
+        <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">@{userProfile.handle}</h2>
+            {userProfile.isVerified && <CheckCircle className="h-5 w-5 text-primary" />}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 md:gap-8">

@@ -8,6 +8,7 @@ export interface User {
   avatarUrl: string;
   bio: string;
   isPrivate?: boolean;
+  isVerified?: boolean; // Added for verification status
   stats: {
     posts: number;
     followers: number;
@@ -25,6 +26,7 @@ export interface Post {
     name: string;
     handle: string;
     avatarUrl: string;
+    isVerified?: boolean;
   }
   content: string;
   tags?: string[];
@@ -35,10 +37,16 @@ export interface Post {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'follow';
-  user: User; // The user who triggered the notification
+  type: 'like' | 'follow' | 'verification_request';
+  recipientId: string; // The user who should receive this notification
+  sender: { // The user who triggered the notification
+    id: string;
+    name: string;
+    handle: string;
+    avatarUrl: string;
+  };
   content: string;
   createdAt: Timestamp;
+  read: boolean;
+  relatedPostId?: string; // Optional: for 'like' notifications
 }
-
-    

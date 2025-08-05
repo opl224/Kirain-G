@@ -7,15 +7,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import StoryViewer from './StoryViewer';
+import { cn } from '@/lib/utils';
 
 interface StoryTrayProps {
   groupedStories: { [key: string]: Story[] };
   isLoading: boolean;
 }
 
-const StoryBubble = ({ story, onSelect }: { story: Story; onSelect: (authorId: string) => void; }) => (
+const StoryBubble = ({ story, onSelect, isViewed }: { story: Story; onSelect: (authorId: string) => void; isViewed: boolean; }) => (
   <button onClick={() => onSelect(story.author.id)} className="flex flex-col items-center gap-2 w-20 text-center">
-    <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500">
+    <div className={cn(
+        "relative p-0.5 rounded-full",
+        isViewed 
+            ? "bg-muted-foreground" 
+            : "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500"
+    )}>
       <Avatar className="w-16 h-16 border-2 border-background">
         <AvatarImage src={story.author.avatarUrl} alt={story.author.name} />
         <AvatarFallback>{story.author.name.charAt(0)}</AvatarFallback>
@@ -34,12 +40,17 @@ const StoryBubbleSkeleton = () => (
 
 export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps) {
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+  const [viewedAuthors, setViewedAuthors] = useState<Set<string>>(new Set());
+
 
   const handleSelectStory = (authorId: string) => {
     setSelectedAuthorId(authorId);
   };
 
   const closeViewer = () => {
+    if (selectedAuthorId) {
+        setViewedAuthors(prev => new Set(prev).add(selectedAuthorId));
+    }
     setSelectedAuthorId(null);
   };
   
@@ -52,7 +63,15 @@ export default function StoryTray({ groupedStories, isLoading }: StoryTrayProps)
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => <StoryBubbleSkeleton key={i} />)
         ) : (
-          storyAuthors.map((story) => <StoryBubble key={story.author.id} story={story} onSelect={handleSelectStory} />)
+          storyAuthors.map((story) => (
+              <StoryBubble 
+                key={story.author.id} 
+                story={story} 
+                onSelect={handleSelectStory} 
+                isViewed={viewedAuthors.has(story.author.id)}
+              />
+            )
+          )
         )}
       </div>
       

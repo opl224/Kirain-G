@@ -10,10 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import EditProfileForm from './EditProfileForm';
 import { useRef, useState } from 'react';
 import TruncatedText from './TruncatedText';
-import { Camera, Loader } from 'lucide-react';
+import { Camera, Loader, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
@@ -30,6 +34,25 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: 'Logout Berhasil',
+        description: 'Anda telah keluar dari akun Anda.',
+      });
+      router.push('/login');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Logout Gagal',
+        description: 'Terjadi kesalahan saat mencoba keluar.',
+      });
+    }
+  };
 
   const handleProfileUpdate = (updatedUser: Partial<User>) => {
     setCurrentUser(prevUser => ({...prevUser, ...updatedUser}));
@@ -92,6 +115,23 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
+      <div className="flex justify-between items-center mb-4 h-10">
+        <h2 className="text-xl font-bold">@{currentUser.handle}</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={handleLogout}>
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+
       <div className="flex items-center gap-4 md:gap-8">
         <div className="relative">
           <button onClick={handleAvatarClick} disabled={isUploading} className="relative rounded-full group">
@@ -123,7 +163,6 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
 
       <div className="mt-6">
         <p className="text-xl font-bold truncate">{currentUser.name}</p>
-        <p className="text-muted-foreground truncate">@{currentUser.handle}</p>
         {currentUser.bio && <TruncatedText text={currentUser.bio} lineClamp={2} className="mt-2 text-foreground/90" />}
       </div>
       

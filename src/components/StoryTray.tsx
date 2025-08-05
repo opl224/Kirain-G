@@ -55,7 +55,7 @@ export default function StoryTray({ stories, isLoading }: StoryTrayProps) {
       
       <Dialog open={!!selectedStory} onOpenChange={(open) => !open && closeViewer()}>
         <DialogContent 
-            className="p-0 bg-black border-none overflow-hidden data-[state=open]:animate-none w-screen h-screen max-w-full max-h-full rounded-none sm:max-w-md sm:h-[90vh] sm:max-h-[90vh] sm:rounded-lg"
+            className="p-0 bg-black border-none overflow-hidden data-[state=open]:animate-none w-screen h-screen max-w-full max-h-full sm:rounded-lg sm:max-w-md sm:h-[90vh] sm:max-h-[90vh]"
             hideCloseButton={true}
         >
             <DialogTitle className="sr-only">Penampil Cerita</DialogTitle>

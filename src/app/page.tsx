@@ -36,14 +36,21 @@ export default function HomePage() {
         const storySnapshot = await getDocs(storiesQuery);
         const storiesData = storySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Story[];
         
-        // Group stories by user, keeping only the latest one
-        const userStories: { [key: string]: Story } = {};
+        // Group stories by user, keeping up to 5 of the latest ones per user
+        const userStories: { [key: string]: Story[] } = {};
         storiesData.forEach(story => {
             if (!userStories[story.author.id]) {
-                userStories[story.author.id] = story;
+                userStories[story.author.id] = [];
+            }
+            if (userStories[story.author.id].length < 5) {
+                userStories[story.author.id].push(story);
             }
         });
-        setStories(Object.values(userStories));
+        
+        // Flatten the grouped stories and take the first story of each user for the tray display
+        const displayStories = Object.values(userStories).map(userStoryList => userStoryList[0]);
+        setStories(displayStories);
+
 
       } catch (error) {
         console.error("Error fetching content: ", error);

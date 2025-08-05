@@ -203,6 +203,7 @@ export default function UserProfilePage() {
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <div className="flex items-center gap-2">
+            {userProfile.isPrivate && <Lock className="h-5 w-5 text-muted-foreground" />}
             <h2 className="text-xl font-bold">@{userProfile.handle}</h2>
             {userProfile.isVerified && <BadgeCheck className="h-5 w-5 text-primary" />}
         </div>

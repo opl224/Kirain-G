@@ -18,9 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { suggestTags } from '@/ai/flows/suggest-tags';
-import { Badge } from './ui/badge';
-import { Bot, Loader, Tag, X, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
+import { Loader, X, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
@@ -43,9 +41,6 @@ export default function PostEditor() {
   const router = useRouter();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [postType, setPostType] = useState<PostType>('note');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -59,42 +54,6 @@ export default function PostEditor() {
       content: '',
     },
   });
-
-  const { getValues, watch } = form;
-  const contentValue = watch('content');
-
-  const handleSuggestTags = async () => {
-    const content = getValues('content');
-    if (!content || content.length < 10) {
-      toast({
-        variant: 'destructive',
-        title: 'Konten terlalu pendek',
-        description: 'Silakan tulis setidaknya 10 karakter untuk mendapatkan saran tag.',
-      });
-      return;
-    }
-    setIsSuggesting(true);
-    setSuggestedTags([]);
-    try {
-      const result = await suggestTags({ postContent: content });
-      setSuggestedTags(result.tags);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Gagal menyarankan tag. Silakan coba lagi.',
-      });
-    } finally {
-      setIsSuggesting(false);
-    }
-  };
-  
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-    setSuggestedTags(prev => prev.filter(t => t !== tag));
-  };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -164,7 +123,7 @@ export default function PostEditor() {
         await addDoc(collection(db, "posts"), {
           author: authorInfo,
           content: values.content,
-          tags: selectedTags,
+          tags: [],
           likes: 0,
           comments: 0,
           createdAt: serverTimestamp(),
@@ -205,8 +164,6 @@ export default function PostEditor() {
       }
       
       form.reset();
-      setSelectedTags([]);
-      setSuggestedTags([]);
       setMediaFile(null);
       setMediaPreview(null);
       if(postType === 'note') router.push('/');
@@ -262,43 +219,6 @@ export default function PostEditor() {
                     </FormItem>
                   )}
                 />
-                <div className="space-y-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSuggestTags}
-                    disabled={isSuggesting || !contentValue}
-                  >
-                    {isSuggesting ? (
-                      <Loader className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Bot className="mr-2 h-4 w-4" />
-                    )}
-                    Sarankan Tag
-                  </Button>
-                  {(isSuggesting || suggestedTags.length > 0 || selectedTags.length > 0) &&
-                    <div className="space-y-2 p-3 rounded-md border bg-muted/50">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <Tag className="h-4 w-4" />
-                        <span>Tag</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedTags.map((tag) => (
-                          <Badge key={tag} className="flex items-center gap-1 pr-1 cursor-pointer" onClick={() => toggleTag(tag)}>
-                            {tag}
-                            <X className="h-3 w-3"/>
-                          </Badge>
-                        ))}
-                         {suggestedTags.filter(t => !selectedTags.includes(t)).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => toggleTag(tag)}>
-                            {tag}
-                          </Badge>
-                        ))}
-                        {isSuggesting && <Badge variant="outline">Mencari...</Badge>}
-                      </div>
-                    </div>
-                  }
-                </div>
               </>
             ) : (
                 <FormItem>

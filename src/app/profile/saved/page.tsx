@@ -93,7 +93,6 @@ export default function SavedPage() {
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <div className="flex items-center gap-3">
-          <Bookmark className="w-8 h-8 text-primary" />
           <h1 className="text-2xl font-bold font-headline">Postingan Tersimpan</h1>
         </div>
       </div>

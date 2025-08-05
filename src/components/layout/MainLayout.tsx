@@ -43,11 +43,14 @@ export default function MainLayout({
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
         const firstDoc = snapshot.docs[0];
         if (firstDoc) {
-            const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
-            const newPostTimestamp = (firstDoc.data().createdAt as Timestamp).toMillis();
-            if (newPostTimestamp > lastSeenTimestamp) {
-                localStorage.setItem('hasNewPosts', 'true');
-                window.dispatchEvent(new Event('storageUpdated'));
+            const createdAt = firstDoc.data().createdAt as Timestamp | null;
+            if (createdAt) { // Check if createdAt is not null
+                const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
+                const newPostTimestamp = createdAt.toMillis();
+                if (newPostTimestamp > lastSeenTimestamp) {
+                    localStorage.setItem('hasNewPosts', 'true');
+                    window.dispatchEvent(new Event('storageUpdated'));
+                }
             }
         }
     });

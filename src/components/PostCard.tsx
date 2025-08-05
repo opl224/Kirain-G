@@ -9,7 +9,7 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Share2, BadgeCheck } from 'lucide-react';
+import { Heart, Bookmark, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -54,18 +54,13 @@ export function PostCard({ post }: { post: Post }) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="bg-muted/50 p-2 flex justify-around">
+      <CardFooter className="bg-muted/50 p-2 flex justify-between">
         <Button variant="ghost" size="sm" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
           <Heart className="h-4 w-4" />
           <span>{post.likes}</span>
         </Button>
         <Button variant="ghost" size="sm" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-          <MessageCircle className="h-4 w-4" />
-          <span>{post.comments}</span>
-        </Button>
-        <Button variant="ghost" size="sm" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-          <Share2 className="h-4 w-4" />
-          <span>Bagikan</span>
+          <Bookmark className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>

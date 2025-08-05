@@ -4,7 +4,7 @@
 import { Bell } from 'lucide-react';
 import { NotificationCard } from '@/components/NotificationCard';
 import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import type { Notification } from '@/lib/types';
@@ -17,31 +17,11 @@ export default function NotificationsPage() {
 
   // Clear notification indicator on page visit
   useEffect(() => {
-    localStorage.setItem('hasUnreadNotifications', 'false');
-    window.dispatchEvent(new Event('storageUpdated'));
-  }, []);
-
-  useEffect(() => {
     if (user) {
-      // Set up a real-time listener for new notifications
-      const notificationsCollection = collection(db, 'notifications');
-      const q = query(
-        notificationsCollection,
-        where('recipientId', '==', user.uid)
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const hasUnread = snapshot.docs.some(doc => !doc.data().read);
-        if (hasUnread) {
-          localStorage.setItem('hasUnreadNotifications', 'true');
-          window.dispatchEvent(new Event('storageUpdated'));
-        }
-      });
-
-      return () => unsubscribe();
+        localStorage.setItem('hasUnreadNotifications', 'false');
+        window.dispatchEvent(new Event('storageUpdated'));
     }
   }, [user]);
-
 
   useEffect(() => {
     if (user) {

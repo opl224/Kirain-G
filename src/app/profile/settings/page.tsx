@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, ExternalLink, Loader } from 'lucide-react';
+import { ChevronRight, ExternalLink, Loader, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -135,7 +135,12 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-      <h1 className="text-3xl font-bold font-headline mb-8">Pengaturan</h1>
+       <div className="flex items-center gap-2 mb-8">
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h1 className="text-2xl font-bold font-headline">Pengaturan</h1>
+      </div>
       
       <div className="space-y-8">
         <Card>
@@ -182,4 +187,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

@@ -47,8 +47,8 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
     const { toast } = useToast();
     
     const videoRef = useRef<HTMLVideoElement>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
     const requestRef = useRef<number>();
+    const imageTimerStartRef = useRef<number>(0);
 
     const currentStory = stories[storyIndex];
     const isAuthor = authUser?.uid === currentStory?.author.id;
@@ -66,83 +66,60 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
         setStoryIndex(prevIndex => Math.max(0, prevIndex - 1));
     };
 
+    // Reset progress and timers on story change
     useEffect(() => {
         setProgress(0);
         if (videoRef.current) {
             videoRef.current.currentTime = 0;
         }
+        imageTimerStartRef.current = Date.now();
+        if (requestRef.current) {
+            cancelAnimationFrame(requestRef.current);
+        }
     }, [storyIndex]);
 
-    const startTimer = useCallback(() => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (isPaused || !currentStory || isDeleting) return;
-
-        if (currentStory.mediaType === 'video' && videoRef.current) {
-            const video = videoRef.current;
-            
-            const onTimeUpdate = () => {
-                 if (video.duration) {
-                    setProgress((video.currentTime / video.duration) * 100);
-                }
-            };
-            const onEnded = () => goToNextStory();
-
-            video.addEventListener('timeupdate', onTimeUpdate);
-            video.addEventListener('ended', onEnded);
-            
-            const playPromise = video.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    if (error.name !== 'AbortError') {
-                        console.error("Video play error:", error);
-                    }
-                });
+    // Main animation loop
+    const animate = useCallback(() => {
+        if (isPaused || isDeleting) {
+            if (currentStory?.mediaType === 'image') {
+                // Adjust start time to account for pause
+                imageTimerStartRef.current = Date.now() - (progress / 100) * STORY_DURATION;
             }
-
-            return () => {
-                video.removeEventListener('timeupdate', onTimeUpdate);
-                video.removeEventListener('ended', onEnded);
-            };
-
         } else {
-            let start = Date.now() - (progress / 100) * STORY_DURATION;
-
-            const tick = () => {
-                if (isPaused || isDeleting) {
-                    start = Date.now() - (progress / 100) * STORY_DURATION;
-                    requestRef.current = requestAnimationFrame(tick);
-                    return;
+            if (currentStory?.mediaType === 'video' && videoRef.current) {
+                const video = videoRef.current;
+                if (video.duration) {
+                    const newProgress = (video.currentTime / video.duration) * 100;
+                    setProgress(newProgress);
+                    if (video.ended) {
+                        goToNextStory();
+                    }
                 }
-
-                const elapsedTime = Date.now() - start;
+            } else if (currentStory?.mediaType === 'image') {
+                const elapsedTime = Date.now() - imageTimerStartRef.current;
                 const newProgress = (elapsedTime / STORY_DURATION) * 100;
-
                 if (newProgress >= 100) {
-                    setProgress(100);
                     goToNextStory();
                 } else {
                     setProgress(newProgress);
-                    requestRef.current = requestAnimationFrame(tick);
                 }
-            };
-            requestRef.current = requestAnimationFrame(tick);
+            }
         }
-    }, [currentStory, isPaused, goToNextStory, progress, isDeleting]);
+        requestRef.current = requestAnimationFrame(animate);
+    }, [isPaused, isDeleting, currentStory, progress, goToNextStory]);
 
 
     useEffect(() => {
-        const cleanup = startTimer();
+        requestRef.current = requestAnimationFrame(animate);
         return () => {
             if (requestRef.current) {
                 cancelAnimationFrame(requestRef.current);
             }
-            if (cleanup) {
-                cleanup();
-            }
         };
-    }, [storyIndex, isPaused, startTimer]);
+    }, [animate]);
 
 
+    // Handle video play/pause state
     useEffect(() => {
         const video = videoRef.current;
         if (video) {
@@ -152,6 +129,7 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
                  const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
+                        // Autoplay was prevented. This is common.
                         if (error.name !== 'AbortError') {
                             console.error("Video play error on resume:", error);
                         }
@@ -159,7 +137,8 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
                 }
             }
         }
-    }, [isPaused, isDeleting]);
+    }, [isPaused, isDeleting, storyIndex]);
+
 
     const toggleMute = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -186,18 +165,18 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
             }
 
             toast({ title: "Cerita dihapus." });
-            // Let the parent component handle the UI update and closing the viewer
             onStoryDelete?.(currentStory.id, currentStory.author.id);
 
         } catch (error: any) {
              toast({ variant: 'destructive', title: 'Gagal menghapus cerita', description: error.message });
         } finally {
-            setIsDeleting(false);
+            // No need to set isDeleting to false if the component is unmounting
         }
     };
 
     const handleInteractionStart = () => setIsPaused(true);
     const handleInteractionEnd = () => {
+        // Use a small timeout to prevent click-through
         setTimeout(() => setIsPaused(false), 100);
     }
     
@@ -237,6 +216,7 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
                 <video ref={videoRef} src={currentStory.mediaUrl} className="w-full h-full object-contain" autoPlay muted={isMuted} playsInline />
             )}
             
+            {/* Click handlers for navigation and pause */}
             <div 
                 className="absolute inset-0 z-10"
                 onMouseDown={handleInteractionStart}
@@ -247,13 +227,14 @@ export default function StoryViewer({ stories, onClose, onStoryDelete, onAllStor
                 onClick={handleClickNavigation}
             />
 
+            {/* Header with progress bars and info */}
             <div className="absolute top-0 left-0 right-0 p-4 z-20" style={{background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'}}>
                 <div className="flex items-center gap-1 w-full">
                     {stories.map((_, idx) => (
                         <div key={idx} className="relative w-full h-1 bg-white/30 rounded-full overflow-hidden">
                            {idx < storyIndex && <div className="absolute top-0 left-0 h-full w-full bg-white" />}
                            {idx === storyIndex && (
-                                <Progress value={progress} className="w-full h-full bg-white !p-0 transition-all duration-100 linear" />
+                                <Progress value={progress} className="w-full h-full bg-white !p-0" />
                            )}
                         </div>
                     ))}

@@ -105,11 +105,11 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <div className="relative w-6 h-6">
+                  <div className="relative w-7 h-7">
                     {item.href === '/profile' && avatarUrl ? (
                       <Avatar
                         className={cn(
-                          'w-6 h-6',
+                          'w-7 h-7',
                           isActive && 'ring-2 ring-primary'
                         )}
                       >

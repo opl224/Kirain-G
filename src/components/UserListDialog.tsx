@@ -123,12 +123,12 @@ export default function UserListDialog({ userIds, title, children, disabled = fa
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild onClick={handleDialogOpen}>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="pt-16">
+        <DialogHeader className="px-6">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[400px] -mx-6 pr-2">
-            <div className="px-6">
+        <ScrollArea className="h-full">
+            <div className="px-6 pb-6">
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => <UserRowSkeleton key={i} />)
                 ) : users.length > 0 ? (

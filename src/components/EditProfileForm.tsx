@@ -92,7 +92,7 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
         <FormField
           control={form.control}
           name="name"

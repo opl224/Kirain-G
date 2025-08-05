@@ -160,8 +160,8 @@ export default function ProfileDisplay({ user, posts }: { user: User, posts: Pos
           <DialogTrigger asChild>
             <Button className="w-full">Ubah Profil</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
+          <DialogContent className="p-0">
+            <DialogHeader className="p-6 pb-0 pt-16">
               <DialogTitle>Ubah Profil</DialogTitle>
             </DialogHeader>
             <EditProfileForm currentUser={currentUser} onProfileUpdate={handleProfileUpdate} />

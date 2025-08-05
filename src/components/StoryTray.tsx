@@ -4,7 +4,7 @@
 import { Story } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import StoryViewer from './StoryViewer';
 
@@ -54,10 +54,12 @@ export default function StoryTray({ stories, isLoading }: StoryTrayProps) {
       </div>
       
       <Dialog open={!!selectedStory} onOpenChange={(open) => !open && closeViewer()}>
-        <DialogContent className="p-0 bg-black border-none overflow-hidden data-[state=open]:animate-none w-full h-full max-w-full max-h-full rounded-none sm:max-w-md sm:h-[90vh] sm:max-h-[90vh] sm:rounded-lg">
+        <DialogContent 
+            className="p-0 bg-black border-none overflow-hidden data-[state=open]:animate-none w-screen h-screen max-w-full max-h-full rounded-none sm:max-w-md sm:h-[90vh] sm:max-h-[90vh] sm:rounded-lg"
+            hideCloseButton={true}
+        >
             <DialogTitle className="sr-only">Penampil Cerita</DialogTitle>
             {selectedStory && <StoryViewer story={selectedStory} onClose={closeViewer} />}
-            <DialogClose className="hidden" />
         </DialogContent>
       </Dialog>
     </>

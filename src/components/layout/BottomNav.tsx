@@ -87,7 +87,7 @@ export default function BottomNav() {
                   )}
                 >
                   <div className="relative">
-                    <item.Icon className={`h-6 w-6 transition-transform duration-200 ${isActive ? 'fill-current' : ''}`} />
+                    <item.Icon className={cn("h-6 w-6 transition-transform duration-200", isActive && "fill-current")} />
                     {showIndicator && (
                         <Badge variant="destructive" className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card" />
                     )}

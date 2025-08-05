@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Bookmark, Loader } from 'lucide-react';
+import { Bookmark, Loader, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
@@ -9,11 +9,14 @@ import { collection, doc, getDoc, getDocs, query, where, documentId } from 'fire
 import type { Post } from '@/lib/types';
 import { PostCard } from '@/components/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function SavedPage() {
   const { user, isLoading: authIsLoading } = useAuth();
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -81,9 +84,14 @@ export default function SavedPage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-      <div className="flex items-center gap-3 mb-8">
-        <Bookmark className="w-8 h-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Postingan Tersimpan</h1>
+      <div className="flex items-center gap-2 mb-8">
+         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <div className="flex items-center gap-3">
+          <Bookmark className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold font-headline">Postingan Tersimpan</h1>
+        </div>
       </div>
       
       {isLoading ? (

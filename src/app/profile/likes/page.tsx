@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Heart, Loader } from 'lucide-react';
+import { Heart, Loader, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
@@ -9,12 +9,15 @@ import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import type { Post } from '@/lib/types';
 import { PostCard } from '@/components/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 
 export default function LikesPage() {
   const { user, isLoading: authIsLoading } = useAuth();
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -67,9 +70,14 @@ export default function LikesPage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-      <div className="flex items-center gap-3 mb-8">
-        <Heart className="w-8 h-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Postingan yang Disukai</h1>
+      <div className="flex items-center gap-2 mb-8">
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.back()}>
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <div className="flex items-center gap-3">
+          <Heart className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold font-headline">Postingan yang Disukai</h1>
+        </div>
       </div>
       
        {isLoading ? (

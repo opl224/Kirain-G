@@ -30,7 +30,9 @@ const TruncatedText = ({ text, lineClamp = 2, className }: TruncatedTextProps) =
   }, [checkOverflow, text]);
 
   const toggleTruncate = () => {
-    setIsTruncated(!isTruncated);
+    if (isOverflowing) {
+      setIsTruncated(!isTruncated);
+    }
   };
 
   const lineClampStyle = {
@@ -40,25 +42,23 @@ const TruncatedText = ({ text, lineClamp = 2, className }: TruncatedTextProps) =
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   };
+
+  const canBeExpanded = isOverflowing && isTruncated;
   
   return (
-    <div>
-      <p
-        ref={textRef}
-        className={cn('whitespace-pre-wrap', className)}
-        style={isTruncated ? lineClampStyle : {}}
-      >
-        {text}
-      </p>
-      {isOverflowing && isTruncated && (
-        <button
-          onClick={toggleTruncate}
-          className="text-sm text-primary hover:underline mt-1"
-        >
-          lihat selengkapnya...
-        </button>
+    <p
+      ref={textRef}
+      onClick={toggleTruncate}
+      className={cn(
+        'whitespace-pre-wrap',
+        canBeExpanded && 'cursor-pointer',
+        className
       )}
-    </div>
+      style={isTruncated ? lineClampStyle : {}}
+      title={canBeExpanded ? "Klik untuk melihat" : ""}
+    >
+      {text}
+    </p>
   );
 };
 

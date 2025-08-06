@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { BadgeCheck, Search, Users } from 'lucide-react';
+import { BadgeCheck, Search, Users, X } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import Image from 'next/image';
 
@@ -111,14 +111,22 @@ export default function SearchPage() {
         <div className="container mx-auto max-w-2xl py-8 px-4">
             <div className="flex items-center gap-4 mb-8">
                 <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                     <Input
                         type="text"
                         placeholder="Cari pengguna dengan username..."
-                        className="w-full pl-10 text-base"
+                        className="w-full pl-10 pr-10 text-base"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    {searchTerm && (
+                        <button 
+                            onClick={() => setSearchTerm('')} 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground hover:text-foreground"
+                        >
+                            <X className="h-5 w-5"/>
+                        </button>
+                    )}
                 </div>
                 {isSuperUser && userCount !== null && (
                     <div className="flex items-center gap-2 text-muted-foreground bg-muted px-3 py-2 rounded-md">
@@ -142,22 +150,21 @@ export default function SearchPage() {
                         ))}
                     </div>
                 ) : hasSearched && results.length === 0 && debouncedSearchTerm.length > 0 ? (
-                     <div className="text-center py-10 flex flex-col items-center gap-2">
+                     <div className="text-center py-10 flex flex-col items-center gap-4">
                         <Image 
                             src="/images/search-not-found.ico" 
                             alt="Pengguna tidak ditemukan" 
-                            width={128} 
-                            height={128}
-                            className="opacity-70 mb-4"
+                            width={256} 
+                            height={256}
+                            className="opacity-70"
                             unoptimized
                         />
-                        <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk</p>
-                        <p className="font-semibold text-foreground text-lg">"@{debouncedSearchTerm}"</p>
+                        <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk "@{debouncedSearchTerm}"</p>
                     </div>
                 ) : (
                     <div className="flex justify-center items-center py-10">
                         <Image 
-                            src="/images/search.ico" 
+                            src="/images/search.png" 
                             alt="Cari pengguna" 
                             width={256} 
                             height={256}

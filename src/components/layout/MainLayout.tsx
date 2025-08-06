@@ -22,7 +22,6 @@ export default function MainLayout({
 
     // --- Listener for new notifications ---
     // This listener just checks for any unread notifications and sets a flag.
-    // The logic to show the indicator is handled in the BottomNav component.
     const notifsQuery = query(
       collection(db, 'notifications'),
       where('recipientId', '==', user.uid),
@@ -53,12 +52,16 @@ export default function MainLayout({
     );
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        if (!snapshot.empty) {
-            // Check if the newest post is actually newer, to avoid race conditions
-            const newestPostTimestamp = snapshot.docs[0].data().createdAt.toMillis();
-            if (newestPostTimestamp > lastSeenTimestamp) {
-                localStorage.setItem('hasNewPosts', 'true');
-                window.dispatchEvent(new Event('storageUpdated'));
+        // We only care if there are new documents. We don't want to trigger on our own new posts
+        // immediately after posting, so we check against last seen timestamp.
+        if (!snapshot.empty && snapshot.docs[0].data().createdAt.toMillis() > lastSeenTimestamp) {
+            const isNewPostFromAnotherUser = snapshot.docs.some(doc => doc.data().authorId !== user.uid);
+            // Or if we are just loading the app for the first time
+            const isInitialLoad = lastSeenTimestamp === 0;
+
+            if (isNewPostFromAnotherUser || (isInitialLoad && !snapshot.metadata.hasPendingWrites)) {
+                 localStorage.setItem('hasNewPosts', 'true');
+                 window.dispatchEvent(new Event('storageUpdated'));
             }
         }
     });

@@ -38,20 +38,25 @@ export default function MainLayout({
     const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
     const postsQuery = query(
         collection(db, "posts"), 
-        orderBy("createdAt", "desc"),
         where("createdAt", ">", Timestamp.fromMillis(lastSeenTimestamp))
     );
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        if (!snapshot.empty) {
+        // We only care about newly added documents, not modifications (like likes)
+        const newPosts = snapshot.docChanges()
+            .filter(change => change.type === 'added')
+            .map(change => change.doc.data());
+
+        if (newPosts.length > 0) {
             // Check if any of the new posts are not from the current user
-            const hasNewPostsFromOthers = snapshot.docs.some(doc => doc.data().authorId !== user.uid);
+            const hasNewPostsFromOthers = newPosts.some(post => post.authorId !== user.uid);
             if (hasNewPostsFromOthers) {
                  localStorage.setItem('hasNewPosts', 'true');
                  window.dispatchEvent(new Event('storageUpdated'));
             }
         }
     });
+
 
     return () => {
       unsubscribeNotifs();

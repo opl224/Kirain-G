@@ -106,6 +106,12 @@ export default function EditProfileForm({ currentUser, onProfileUpdate }: EditPr
             </FormItem>
           )}
         />
+        <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+                <Input value={currentUser.email} disabled />
+            </FormControl>
+        </FormItem>
         <FormField
           control={form.control}
           name="handle"

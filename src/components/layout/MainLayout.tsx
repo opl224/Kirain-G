@@ -20,8 +20,7 @@ export default function MainLayout({
   useEffect(() => {
     if (!user) return;
 
-    // --- Listener for new notifications ---
-    // This listener just checks for any unread notifications and sets a flag.
+    // --- Listener for new notifications (likes, follows, etc.) ---
     const notifsQuery = query(
       collection(db, 'notifications'),
       where('recipientId', '==', user.uid),
@@ -37,7 +36,6 @@ export default function MainLayout({
 
     // --- Listener for new posts ---
     const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
-    // Only query for posts newer than what the user has seen
     const postsQuery = query(
         collection(db, "posts"), 
         orderBy("createdAt", "desc"),
@@ -45,12 +43,13 @@ export default function MainLayout({
     );
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        // We only care if there are new documents. We don't want to trigger on our own new posts
-        // immediately after posting, so we check against last seen timestamp.
         if (!snapshot.empty && snapshot.docs[0].data().createdAt.toMillis() > lastSeenTimestamp) {
-            // No need to check for authorId, any new post should trigger the indicator
-            localStorage.setItem('hasNewPosts', 'true');
-            window.dispatchEvent(new Event('storageUpdated'));
+            // Check if any of the new posts are not from the current user
+            const hasNewPostsFromOthers = snapshot.docs.some(doc => doc.data().authorId !== user.uid);
+            if (hasNewPostsFromOthers) {
+                 localStorage.setItem('hasNewPosts', 'true');
+                 window.dispatchEvent(new Event('storageUpdated'));
+            }
         }
     });
 

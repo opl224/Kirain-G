@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import MainLayout from '@/components/layout/MainLayout';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import AppProviders from '@/components/AppProviders';
 
 export const metadata: Metadata = {
   title: 'Kirain\'G',
@@ -29,15 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased h-full bg-background">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <MainLayout>{children}</MainLayout>
-          <Toaster />
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

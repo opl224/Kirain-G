@@ -43,7 +43,7 @@ export default function MainLayout({
     );
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        if (!snapshot.empty && snapshot.docs[0].data().createdAt.toMillis() > lastSeenTimestamp) {
+        if (!snapshot.empty) {
             // Check if any of the new posts are not from the current user
             const hasNewPostsFromOthers = snapshot.docs.some(doc => doc.data().authorId !== user.uid);
             if (hasNewPostsFromOthers) {

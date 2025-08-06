@@ -11,12 +11,13 @@ import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
+import { useNotificationIndicator } from '@/hooks/useNotificationIndicator';
 
 const navItems = [
-  { href: '/', label: 'Beranda', icon: 'home' },
+  { href: '/', label: 'Beranda', icon: 'home', indicatorKey: 'hasNewPosts' as const },
   { href: '/search', label: 'Cari', icon: 'search' },
   { href: '/post', label: 'Post', icon: 'post' },
-  { href: '/notifications', label: 'Notifikasi', icon: 'bell' },
+  { href: '/notifications', label: 'Notifikasi', icon: 'bell', indicatorKey: 'hasUnreadNotifications' as const },
   { href: '/profile', label: 'Profil', icon: 'user' },
 ];
 
@@ -27,6 +28,7 @@ export default function BottomNav() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarInitial, setAvatarInitial] = useState('');
   const [isMounted, setIsMounted] = useState(false);
+  const indicators = useNotificationIndicator();
 
   useEffect(() => {
     setIsMounted(true);
@@ -64,6 +66,7 @@ export default function BottomNav() {
               (item.href !== '/' && pathname.startsWith(item.href));
 
             const iconSrc = `/icons-${iconDir}/${item.icon}${isActive ? '-fill' : ''}.svg`;
+            const showIndicator = item.indicatorKey && indicators[item.indicatorKey];
 
             return (
               <li key={item.href} className="h-full">
@@ -81,14 +84,19 @@ export default function BottomNav() {
                         <AvatarFallback>{avatarInitial}</AvatarFallback>
                       </Avatar>
                     ) : (
-                      <Image
-                        src={iconSrc}
-                        alt={item.label}
-                        width={26}
-                        height={26}
-                        className="transition-transform duration-200"
-                        unoptimized
-                      />
+                      <>
+                        <Image
+                          src={iconSrc}
+                          alt={item.label}
+                          width={26}
+                          height={26}
+                          className="transition-transform duration-200"
+                          unoptimized
+                        />
+                         {showIndicator && (
+                            <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-card" />
+                        )}
+                      </>
                     )}
                   </div>
                    <span className="text-[10px] sr-only">{item.label}</span>

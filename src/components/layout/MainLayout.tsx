@@ -21,6 +21,8 @@ export default function MainLayout({
     if (!user) return;
 
     // --- Listener for new notifications ---
+    // This listener just checks for any unread notifications and sets a flag.
+    // The logic to show the indicator is handled in the BottomNav component.
     const notifsQuery = query(
       collection(db, 'notifications'),
       where('recipientId', '==', user.uid),
@@ -28,29 +30,35 @@ export default function MainLayout({
     );
 
     const unsubscribeNotifs = onSnapshot(notifsQuery, (snapshot) => {
-      if (!snapshot.empty) {
-        localStorage.setItem('hasUnreadNotifications', 'true');
-        window.dispatchEvent(new Event('storageUpdated'));
-      }
+        if (!snapshot.empty) {
+            localStorage.setItem('hasUnreadNotifications', 'true');
+            window.dispatchEvent(new Event('storageUpdated'));
+        } else {
+            // If there are no unread notifications, ensure the flag is false
+            const wasSet = localStorage.getItem('hasUnreadNotifications') === 'true';
+            if (wasSet) {
+                 localStorage.setItem('hasUnreadNotifications', 'false');
+                 window.dispatchEvent(new Event('storageUpdated'));
+            }
+        }
     });
 
     // --- Listener for new posts ---
+    const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
+    // Only query for posts newer than what the user has seen
     const postsQuery = query(
         collection(db, "posts"), 
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc"),
+        where("createdAt", ">", Timestamp.fromMillis(lastSeenTimestamp))
     );
 
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-        const firstDoc = snapshot.docs[0];
-        if (firstDoc) {
-            const createdAt = firstDoc.data().createdAt as Timestamp | null;
-            if (createdAt) { // Check if createdAt is not null
-                const lastSeenTimestamp = Number(localStorage.getItem('lastSeenPostTimestamp') || '0');
-                const newPostTimestamp = createdAt.toMillis();
-                if (newPostTimestamp > lastSeenTimestamp) {
-                    localStorage.setItem('hasNewPosts', 'true');
-                    window.dispatchEvent(new Event('storageUpdated'));
-                }
+        if (!snapshot.empty) {
+            // Check if the newest post is actually newer, to avoid race conditions
+            const newestPostTimestamp = snapshot.docs[0].data().createdAt.toMillis();
+            if (newestPostTimestamp > lastSeenTimestamp) {
+                localStorage.setItem('hasNewPosts', 'true');
+                window.dispatchEvent(new Event('storageUpdated'));
             }
         }
     });

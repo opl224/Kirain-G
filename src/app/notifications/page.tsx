@@ -55,12 +55,14 @@ export default function NotificationsPage() {
           const querySnapshot = await getDocs(q);
           const newNotifications: Notification[] = [];
           const batch = writeBatch(db);
+          let hasUnread = false;
           
           querySnapshot.forEach(doc => {
               const notification = { id: doc.id, ...doc.data() } as Notification;
               newNotifications.push(notification);
               // Mark unread notifications as read
-              if (initialLoad && !notification.read) {
+              if (!notification.read) {
+                  hasUnread = true;
                   const notifRef = doc.ref;
                   batch.update(notifRef, { read: true });
               }
@@ -74,7 +76,7 @@ export default function NotificationsPage() {
               // After clearing, make sure the indicator is off
               localStorage.setItem('hasUnreadNotifications', 'false');
               window.dispatchEvent(new Event('storageUpdated'));
-              if (!querySnapshot.empty) {
+              if (hasUnread) {
                   await batch.commit();
               }
           } else {

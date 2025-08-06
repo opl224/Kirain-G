@@ -4,36 +4,41 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Home, PlusSquare, Bell, User as UserIcon, Search } from 'lucide-react';
 
 const navItems = [
   {
     href: '/',
     label: 'Beranda',
-    icon: 'home',
+    Icon: Home,
     storageKey: 'hasNewPosts',
+  },
+  {
+    href: '/search',
+    label: 'Cari',
+    Icon: Search,
   },
   {
     href: '/post',
     label: 'Post',
-    icon: 'post',
+    Icon: PlusSquare,
   },
   {
     href: '/notifications',
     label: 'Notifikasi',
-    icon: 'bell',
+    Icon: Bell,
     storageKey: 'hasUnreadNotifications',
   },
   {
     href: '/profile',
     label: 'Profil',
-    icon: 'profile',
+    Icon: UserIcon,
   },
 ];
 
@@ -84,14 +89,12 @@ export default function BottomNav() {
   return (
     <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden z-50">
       <nav className="h-full">
-        <ul className="h-full grid grid-cols-4">
+        <ul className="h-full grid grid-cols-5">
           {navItems.map((item) => {
             const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname === item.href;
-
-            const iconSrc = `/icons/${item.icon}${isActive ? '-fill' : ''}.svg`;
+              (item.href === '/' && pathname === '/') ||
+              (item.href !== '/' && pathname.startsWith(item.href));
+              
             const showIndicator = item.storageKey
               ? indicators[item.storageKey]
               : false;
@@ -105,24 +108,19 @@ export default function BottomNav() {
                     isActive && 'text-primary'
                   )}
                 >
-                  <div className="relative w-7 h-7">
-                    {item.href === '/profile' && avatarUrl ? (
+                  <div className="relative w-7 h-7 flex items-center justify-center">
+                    {item.href === '/profile' && user ? (
                       <Avatar
                         className={cn(
                           'w-7 h-7',
                           isActive && 'ring-2 ring-primary'
                         )}
                       >
-                        <AvatarImage src={avatarUrl} alt="User Avatar" />
+                        <AvatarImage src={avatarUrl ?? undefined} alt="User Avatar" />
                         <AvatarFallback>{avatarInitial}</AvatarFallback>
                       </Avatar>
                     ) : (
-                      <Image
-                        src={iconSrc}
-                        alt={item.label}
-                        fill
-                        className="transition-transform duration-200"
-                      />
+                      <item.Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
                     )}
                     {showIndicator && (
                       <Badge
@@ -131,7 +129,7 @@ export default function BottomNav() {
                       />
                     )}
                   </div>
-                  <span className="text-xs sr-only">{item.label}</span>
+                  <span className="text-[10px] sr-only">{item.label}</span>
                 </Link>
               </li>
             );

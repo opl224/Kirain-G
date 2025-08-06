@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, Post } from '@/lib/types';
+import type { User, Post, Author } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from './PostCard';
@@ -190,7 +190,7 @@ export default function ProfileDisplay({
         <h2 className="text-xl font-bold font-headline mb-4 text-center">Postingan</h2>
         <div className="space-y-6">
           {posts.length > 0 ? (
-            posts.map(post => <PostCard key={post.id} post={post} onPostDelete={onPostDelete} />)
+            posts.map(post => <PostCard key={post.id} postData={post} author={post.author as Author} onPostDelete={onPostDelete} />)
           ) : (
             <p className="text-center text-muted-foreground py-8">Belum ada postingan.</p>
           )}

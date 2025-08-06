@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, where, documentId } from 'firebase/firestore';
-import type { Post } from '@/lib/types';
+import type { PostData, Author, Post } from '@/lib/types';
 import { PostCard } from '@/components/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -43,16 +43,37 @@ export default function SavedPage() {
                   chunks.push(savedPostIds.slice(i, i + 30));
               }
               
-              const postsData: Post[] = [];
+              const postsData: PostData[] = [];
               for (const chunk of chunks) {
                   if (chunk.length === 0) continue;
                   const q = query(postsCollection, where(documentId(), 'in', chunk));
                   const querySnapshot = await getDocs(q);
                   querySnapshot.forEach((doc) => {
-                      postsData.push({ id: doc.id, ...doc.data() } as Post);
+                      postsData.push({ id: doc.id, ...doc.data() } as PostData);
                   });
               }
-            setSavedPosts(postsData);
+              
+             // Get unique author IDs from posts
+            const authorIds = [...new Set(postsData.map(p => p.authorId))];
+
+            // Fetch authors' data
+            const authors: { [id: string]: Author } = {};
+            if (authorIds.length > 0) {
+                const usersCollection = collection(db, 'users');
+                const authorsQuery = query(usersCollection, where(documentId(), 'in', authorIds));
+                const authorsSnapshot = await getDocs(authorsQuery);
+                authorsSnapshot.forEach(doc => {
+                    authors[doc.id] = { id: doc.id, ...doc.data() } as Author;
+                });
+            }
+            
+            // Combine posts with their author data
+            const combinedPosts = postsData.map(post => ({
+                ...post,
+                author: authors[post.authorId]
+            })).filter(p => p.author) as Post[];
+
+            setSavedPosts(combinedPosts);
           }
         }
       } catch (error) {
@@ -105,7 +126,7 @@ export default function SavedPage() {
       ) : savedPosts.length > 0 ? (
         <div className="space-y-6">
           {savedPosts.map((post) => (
-            <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />
+            <PostCard key={post.id} postData={post} author={post.author} onPostDelete={handlePostDelete} />
           ))}
         </div>
       ) : (
@@ -118,5 +139,3 @@ export default function SavedPage() {
     </div>
   );
 }
-
-    

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit, startAfter, type QueryDocumentSnapshot } from 'firebase/firestore';
-import type { User, Post } from '@/lib/types';
+import type { User, Post, PostData, Author } from '@/lib/types';
 import ProfileDisplay from '@/components/ProfileDisplay';
 import PageLoader from '@/components/PageLoader';
 
@@ -34,7 +34,7 @@ export default function ProfilePage() {
           const postsCollection = collection(db, 'posts');
           let q = query(
               postsCollection, 
-              where('author.id', '==', authUser.uid), 
+              where('authorId', '==', authUser.uid), 
               orderBy('createdAt', 'desc'),
               limit(POSTS_PER_PAGE)
           );
@@ -44,7 +44,12 @@ export default function ProfilePage() {
           }
           
           const postSnapshot = await getDocs(q);
-          const newPosts = postSnapshot.docs.map(doc => ({ ...doc.data() as Post, id: doc.id }));
+          const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+
+           const newPosts = newPostsData.map(post => ({
+                ...post,
+                author: userProfile as Author,
+            })) as Post[];
           
           setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
           setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
@@ -76,20 +81,63 @@ export default function ProfilePage() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          setUserProfile(userDocSnap.data() as User);
+          const profileData = userDocSnap.data() as User;
+          setUserProfile(profileData);
+           // Fetch initial posts (pass profile data to avoid race condition)
+            await fetchUserPostsWithProfile(profileData, true);
+
         } else {
           console.log("No such user!");
         }
-
-        // Fetch initial posts
-        await fetchUserPosts(true);
-
       } catch (error) {
         console.error("Error fetching profile data: ", error);
       } finally {
         setIsLoading(false);
       }
     };
+    
+    const fetchUserPostsWithProfile = async (profile: User, initialLoad = false) => {
+        if (!authUser) return;
+
+        if (!initialLoad) {
+            setIsFetchingMorePosts(true);
+        }
+
+        try {
+            const postsCollection = collection(db, 'posts');
+            let q = query(
+                postsCollection, 
+                where('authorId', '==', authUser.uid), 
+                orderBy('createdAt', 'desc'),
+                limit(POSTS_PER_PAGE)
+            );
+
+            if (!initialLoad && postsLastVisible) {
+                q = query(q, startAfter(postsLastVisible));
+            }
+            
+            const postSnapshot = await getDocs(q);
+            const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+            
+            const newPosts = newPostsData.map(post => ({
+                ...post,
+                author: profile as Author,
+            })) as Post[];
+            
+            setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+            setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
+            
+            setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+
+        } catch (error) {
+            console.error("Error fetching user posts: ", error);
+        } finally {
+            if (!initialLoad) {
+                setIsFetchingMorePosts(false);
+            }
+        }
+    };
+
 
     fetchData();
   }, [authUser, authIsLoading]);
@@ -124,5 +172,3 @@ export default function ProfilePage() {
     />
   );
 }
-
-    

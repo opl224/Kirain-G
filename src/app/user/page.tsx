@@ -22,9 +22,10 @@ import {
   deleteDoc,
   limit, 
   startAfter,
-  type QueryDocumentSnapshot
+  type QueryDocumentSnapshot,
+  documentId
 } from 'firebase/firestore';
-import type { User, Post } from '@/lib/types';
+import type { User, Post, PostData, Author } from '@/lib/types';
 import { ArrowLeft, Loader, BadgeCheck, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +71,7 @@ export default function UserProfilePage() {
 
   const fetchUserPosts = async (initialLoad = false) => {
     if (!userId) return;
-     if (!canViewProfile && !initialLoad) return;
+     if (userProfile && !(!userProfile.isPrivate || isFollowing) && !initialLoad) return;
 
 
     if (initialLoad) {
@@ -83,7 +84,7 @@ export default function UserProfilePage() {
         const postsCollection = collection(db, 'posts');
         let q = query(
             postsCollection, 
-            where('author.id', '==', userId), 
+            where('authorId', '==', userId), 
             orderBy('createdAt', 'desc'),
             limit(POSTS_PER_PAGE)
         );
@@ -93,7 +94,8 @@ export default function UserProfilePage() {
         }
         
         const postSnapshot = await getDocs(q);
-        const newPosts = postSnapshot.docs.map(doc => ({ ...doc.data() as Post, id: doc.id }));
+        const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+        const newPosts = newPostsData.map(p => ({...p, author: userProfile as Author})) as Post[];
         
         setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
         setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
@@ -140,7 +142,8 @@ export default function UserProfilePage() {
 
           // Fetch user posts only if profile is not private or user is a follower
           if (!profileData.isPrivate || localIsFollowing) {
-            await fetchUserPosts(true);
+            // We need to pass profileData to fetchUserPosts to ensure it has the author info
+            await fetchPostsWithAuthor(profileData, true);
           }
         } else {
           console.log('Pengguna tidak ditemukan!');
@@ -152,6 +155,42 @@ export default function UserProfilePage() {
         setIsLoading(false);
       }
     };
+    
+    const fetchPostsWithAuthor = async (profile: User, initialLoad = false) => {
+      if (!userId) return;
+      if (!(!profile.isPrivate || isFollowing) && !initialLoad) return;
+
+      if (!initialLoad) setIsFetchingMorePosts(true);
+
+      try {
+        const postsCollection = collection(db, 'posts');
+        let q = query(
+          postsCollection, 
+          where('authorId', '==', userId), 
+          orderBy('createdAt', 'desc'),
+          limit(POSTS_PER_PAGE)
+        );
+
+        if (!initialLoad && postsLastVisible) {
+          q = query(q, startAfter(postsLastVisible));
+        }
+
+        const postSnapshot = await getDocs(q);
+        const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+        
+        // Use the passed profile as the author for all posts
+        const newPosts = newPostsData.map(p => ({ ...p, author: profile as Author })) as Post[];
+
+        setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+        setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
+        setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+      } catch (error) {
+        console.error("Error fetching user posts:", error);
+      } finally {
+        if (!initialLoad) setIsFetchingMorePosts(false);
+      }
+    };
+
 
     fetchData();
   }, [userId, authIsLoading, authUser, router]);
@@ -337,7 +376,7 @@ export default function UserProfilePage() {
           <>
             <div className="space-y-6">
               {userPosts.length > 0 ? (
-                  userPosts.map((post) => <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />)
+                  userPosts.map((post) => <PostCard key={post.id} postData={post} author={post.author} onPostDelete={handlePostDelete} />)
               ) : (
                   <p className="text-center text-muted-foreground py-8">
                   Belum ada postingan.

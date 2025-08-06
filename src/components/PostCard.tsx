@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Post } from '@/lib/types';
+import type { PostData, Author } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -34,37 +34,37 @@ import {
 } from "@/components/ui/alert-dialog"
 
 
-export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (postId: string) => void }) {
+export function PostCard({ postData, author, onPostDelete }: { postData: PostData, author: Author, onPostDelete?: (postId: string) => void }) {
   const { user } = useAuth();
   const { toast } = useToast();
   
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes);
+  const [likeCount, setLikeCount] = useState(postData.likes);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isAuthor = user?.uid === post.author.id;
+  const isAuthor = user?.uid === author.id;
 
   useEffect(() => {
     if (user) {
-      setIsLiked(post.likedBy?.includes(user.uid) || false);
+      setIsLiked(postData.likedBy?.includes(user.uid) || false);
       
       const userRef = doc(db, 'users', user.uid);
       getDoc(userRef).then(docSnap => {
         if(docSnap.exists()) {
             const userData = docSnap.data();
-            setIsSaved(userData.savedPosts?.includes(post.id) || false);
+            setIsSaved(userData.savedPosts?.includes(postData.id) || false);
         }
       })
     }
-  }, [user, post]);
+  }, [user, postData]);
 
   const handleLikeToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user || isProcessing) return;
 
     setIsProcessing(true);
-    const postRef = doc(db, 'posts', post.id);
+    const postRef = doc(db, 'posts', postData.id);
 
     try {
       if (isLiked) {
@@ -78,9 +78,9 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
         // Remove notification if it exists
         const notifQuery = query(collection(db, "notifications"), 
                                 where("type", "==", "like"),
-                                where("relatedPostId", "==", post.id),
+                                where("relatedPostId", "==", postData.id),
                                 where("sender.id", "==", user.uid),
-                                where("recipientId", "==", post.author.id));
+                                where("recipientId", "==", author.id));
         const notifSnapshot = await getDocs(notifQuery);
         notifSnapshot.forEach(async (doc) => {
             await deleteDoc(doc.ref);
@@ -95,12 +95,12 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
         setIsLiked(true);
         
         // Add notification, but not if you're liking your own post
-        if (user.uid !== post.author.id) {
+        if (user.uid !== author.id) {
             const currentUserDoc = await getDoc(doc(db, 'users', user.uid));
             if(currentUserDoc.exists()) {
               const currentUserData = currentUserDoc.data();
               await addDoc(collection(db, "notifications"), {
-                  recipientId: post.author.id,
+                  recipientId: author.id,
                   sender: {
                       id: user.uid,
                       name: currentUserData.name,
@@ -109,7 +109,7 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
                   },
                   type: 'like',
                   content: `menyukai postingan Anda.`,
-                  relatedPostId: post.id,
+                  relatedPostId: postData.id,
                   read: false,
                   createdAt: serverTimestamp(),
               });
@@ -139,14 +139,14 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
         if (isSaved) {
             // Unsave
             await updateDoc(userRef, {
-                savedPosts: arrayRemove(post.id)
+                savedPosts: arrayRemove(postData.id)
             });
             setIsSaved(false);
             toast({ title: "Postingan dihapus dari simpanan." });
         } else {
             // Save
             await updateDoc(userRef, {
-                savedPosts: arrayUnion(post.id)
+                savedPosts: arrayUnion(postData.id)
             });
             setIsSaved(true);
             toast({ title: "Postingan disimpan!" });
@@ -168,15 +168,15 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
 
     setIsProcessing(true);
     try {
-        const postRef = doc(db, 'posts', post.id);
+        const postRef = doc(db, 'posts', postData.id);
         await deleteDoc(postRef);
 
         // Decrement user's post count
-        const userRef = doc(db, 'users', post.author.id);
+        const userRef = doc(db, 'users', author.id);
         await updateDoc(userRef, { 'stats.posts': increment(-1) });
 
         toast({ title: "Postingan dihapus." });
-        onPostDelete?.(post.id);
+        onPostDelete?.(postData.id);
     } catch (error) {
         console.error("Error deleting post: ", error);
         toast({
@@ -190,30 +190,30 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
   }
 
 
-  const profileLink = user && user.uid === post.author.id ? '/profile' : `/user?id=${post.author.id}`;
-  const postDate = post.createdAt ? format(post.createdAt.toDate(), 'dd MMM yyyy', { locale: id }) : '';
+  const profileLink = user && user.uid === author.id ? '/profile' : `/user?id=${author.id}`;
+  const postDate = postData.createdAt ? format(postData.createdAt.toDate(), 'dd MMM yyyy', { locale: id }) : '';
 
   return (
     <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="flex flex-row items-start gap-3 p-4">
         <Link href={profileLink}>
           <Avatar>
-            <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={author.avatarUrl} alt={author.name} />
+            <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </Link>
         <div className="flex-grow">
           <div className="flex items-center gap-1">
             <Link href={profileLink}>
-              <p className="font-semibold text-card-foreground">{post.author.name}</p>
+              <p className="font-semibold text-card-foreground">{author.name}</p>
             </Link>
-            {post.author.isVerified && (
+            {author.isVerified && (
               <BadgeCheck className="h-4 w-4 text-primary" />
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Link href={profileLink}>
-              <span>@{post.author.handle}</span>
+              <span>@{author.handle}</span>
             </Link>
             {postDate && (
               <>
@@ -249,11 +249,11 @@ export function PostCard({ post, onPostDelete }: { post: Post, onPostDelete?: (p
       </CardHeader>
       <CardContent className="px-4 pb-4">
         <p className="text-base text-foreground whitespace-pre-wrap">
-          {post.content}
+          {postData.content}
         </p>
-        {post.tags && post.tags.length > 0 && (
+        {postData.tags && postData.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {post.tags.map((tag) => (
+            {postData.tags.map((tag) => (
               <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>

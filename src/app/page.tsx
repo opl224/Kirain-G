@@ -3,8 +3,8 @@
 
 import { PostCard } from '@/components/PostCard';
 import { db } from '@/lib/firebase';
-import { Post, Story } from '@/lib/types';
-import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
+import { Post, Story, PostData, Author } from '@/lib/types';
+import { collection, getDocs, orderBy, query, Timestamp, where, documentId } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import StoryTray from '@/components/StoryTray';
 
@@ -38,13 +38,37 @@ export default function HomePage() {
         const postsCollection = collection(db, 'posts');
         const postsQuery = query(postsCollection, orderBy('createdAt', 'desc'));
         const postSnapshot = await getDocs(postsQuery);
-        const postsData = await Promise.all(
-          postSnapshot.docs.map(async (doc) => {
-            const post = doc.data() as Post;
-            return { ...post, id: doc.id };
-          })
-        );
-        setPosts(postsData);
+        const postsData = postSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PostData));
+
+        // Get unique author IDs from posts
+        const authorIds = [...new Set(postsData.map(p => p.authorId))];
+
+        // Fetch authors' data
+        const authors: { [id: string]: Author } = {};
+        if (authorIds.length > 0) {
+          const usersCollection = collection(db, 'users');
+          // Firestore 'in' query is limited to 30 elements. Chunk if needed.
+          const chunks: string[][] = [];
+          for (let i = 0; i < authorIds.length; i += 30) {
+              chunks.push(authorIds.slice(i, i + 30));
+          }
+          
+          for (const chunk of chunks) {
+              if (chunk.length === 0) continue;
+              const authorsQuery = query(usersCollection, where(documentId(), 'in', chunk));
+              const authorsSnapshot = await getDocs(authorsQuery);
+              authorsSnapshot.forEach(doc => {
+                  authors[doc.id] = { id: doc.id, ...doc.data() } as Author;
+              });
+          }
+        }
+        
+        // Combine posts with their author data
+        const combinedPosts = postsData.map(post => ({
+          ...post,
+          author: authors[post.authorId]
+        })).filter(p => p.author); // Filter out posts where author might not be found
+        setPosts(combinedPosts as Post[]);
 
         // Fetch Stories (from the last 24 hours)
         const storiesCollection = collection(db, 'stories');
@@ -100,7 +124,7 @@ export default function HomePage() {
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />
+            <PostCard key={post.id} postData={post} author={post.author} onPostDelete={handlePostDelete} />
           ))}
         </div>
       )}

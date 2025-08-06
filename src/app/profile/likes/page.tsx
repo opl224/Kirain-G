@@ -5,8 +5,8 @@ import { Heart, Loader, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import type { Post } from '@/lib/types';
+import { collection, query, where, getDocs, orderBy, documentId } from 'firebase/firestore';
+import type { PostData, Author, Post } from '@/lib/types';
 import { PostCard } from '@/components/PostCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,30 @@ export default function LikesPage() {
         const postsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        })) as Post[];
-        setLikedPosts(postsData);
+        })) as PostData[];
+        
+        // Get unique author IDs from posts
+        const authorIds = [...new Set(postsData.map(p => p.authorId))];
+
+        // Fetch authors' data
+        const authors: { [id: string]: Author } = {};
+        if (authorIds.length > 0) {
+            const usersCollection = collection(db, 'users');
+            const authorsQuery = query(usersCollection, where(documentId(), 'in', authorIds));
+            const authorsSnapshot = await getDocs(authorsQuery);
+            authorsSnapshot.forEach(doc => {
+                authors[doc.id] = { id: doc.id, ...doc.data() } as Author;
+            });
+        }
+        
+        // Combine posts with their author data
+        const combinedPosts = postsData.map(post => ({
+            ...post,
+            author: authors[post.authorId]
+        })).filter(p => p.author) as Post[];
+
+        setLikedPosts(combinedPosts);
+
       } catch (error) {
         console.error("Error fetching liked posts: ", error);
       } finally {
@@ -91,7 +113,7 @@ export default function LikesPage() {
       ) : likedPosts.length > 0 ? (
         <div className="space-y-6">
           {likedPosts.map((post) => (
-            <PostCard key={post.id} post={post} onPostDelete={handlePostDelete} />
+            <PostCard key={post.id} postData={post} author={post.author} onPostDelete={handlePostDelete} />
           ))}
         </div>
       ) : (
@@ -104,5 +126,3 @@ export default function LikesPage() {
     </div>
   );
 }
-
-    

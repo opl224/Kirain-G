@@ -111,22 +111,15 @@ export default function PostEditor() {
       if (!userDocSnap.exists()) throw new Error("Profil pengguna tidak ditemukan.");
       const userProfile = userDocSnap.data();
 
-      const authorInfo = {
-          id: user.uid,
-          name: userProfile.name,
-          handle: userProfile.handle,
-          avatarUrl: userProfile.avatarUrl,
-          isVerified: userProfile.isVerified || false,
-      };
-
       if (postType === 'note') {
         await addDoc(collection(db, "posts"), {
-          author: authorInfo,
+          authorId: user.uid,
           content: values.content,
           tags: [],
           likes: 0,
           comments: 0,
           createdAt: serverTimestamp(),
+          likedBy: [],
         });
         // Increment user's post count
         await updateDoc(userDocRef, { 'stats.posts': increment(1) });
@@ -151,6 +144,14 @@ export default function PostEditor() {
         if (!urlData.publicUrl) {
             throw new Error('Gagal mendapatkan URL publik untuk media.');
         }
+
+        const authorInfo = {
+          id: user.uid,
+          name: userProfile.name,
+          handle: userProfile.handle,
+          avatarUrl: userProfile.avatarUrl,
+          isVerified: userProfile.isVerified || false,
+        };
 
         // Save metadata to Firestore
         await addDoc(collection(db, "stories"), {
@@ -269,5 +270,3 @@ export default function PostEditor() {
     </Card>
   );
 }
-
-    

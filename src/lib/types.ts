@@ -1,15 +1,18 @@
 
 import { Timestamp } from "firebase/firestore";
 
-export interface User {
+export interface Author {
   id: string;
   name: string;
   email: string;
   handle: string;
   avatarUrl: string;
+  isVerified?: boolean;
+}
+
+export interface User extends Author {
   bio: string;
   isPrivate?: boolean;
-  isVerified?: boolean; // Added for verification status
   stats: {
     posts: number;
     followers: number;
@@ -22,21 +25,21 @@ export interface User {
   createdAt?: Timestamp;
 }
 
-export interface Post {
+
+export interface PostData {
   id: string;
-  author: {
-    id: string;
-    name: string;
-    handle: string;
-    avatarUrl: string;
-    isVerified?: boolean;
-  }
+  authorId: string;
   content: string;
   tags?: string[];
   likes: number; // This will be the count of likedBy
   likedBy?: string[]; // Array of user IDs who liked the post
   comments: number;
   createdAt: Timestamp;
+}
+
+
+export interface Post extends PostData {
+  author: Author;
 }
 
 export interface Story {
@@ -70,5 +73,4 @@ export interface Notification {
   read: boolean;
   relatedPostId?: string; // Optional: for 'like' notifications
 }
-
     

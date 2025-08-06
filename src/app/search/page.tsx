@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { BadgeCheck, Search, Loader2 } from 'lucide-react';
+import { BadgeCheck, Search, Users } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 function UserRow({ user, onDialogClose }: { user: User, onDialogClose: () => void }) {
@@ -54,8 +54,24 @@ export default function SearchPage() {
     const [results, setResults] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [userCount, setUserCount] = useState<number | null>(null);
+
+    const { user: authUser } = useAuth();
+    const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
+    const isSuperUser = authUser?.uid === superUserId;
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+    useEffect(() => {
+        if (isSuperUser) {
+            const fetchUserCount = async () => {
+                const usersCollection = collection(db, 'users');
+                const snapshot = await getDocs(usersCollection);
+                setUserCount(snapshot.size);
+            };
+            fetchUserCount();
+        }
+    }, [isSuperUser]);
 
     const performSearch = useCallback(async (searchHandle: string) => {
         if (searchHandle.trim().length < 2) {
@@ -92,15 +108,23 @@ export default function SearchPage() {
 
     return (
         <div className="container mx-auto max-w-2xl py-8 px-4">
-            <div className="relative mb-8">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    type="text"
-                    placeholder="Cari pengguna dengan username..."
-                    className="w-full pl-10 text-base"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex items-center gap-4 mb-8">
+                <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="Cari pengguna dengan username..."
+                        className="w-full pl-10 text-base"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                {isSuperUser && userCount !== null && (
+                    <div className="flex items-center gap-2 text-muted-foreground bg-muted px-3 py-2 rounded-md">
+                        <Users className="h-5 w-5" />
+                        <span className="font-semibold text-sm">{userCount}</span>
+                    </div>
+                )}
             </div>
 
             <div>

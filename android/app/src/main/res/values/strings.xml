@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kirain\'G</string>
+    <string name="title_activity_main">Kirain\'G</string>
+    <string name="package_name">com.kiraing.app</string>
+    <string name="custom_url_scheme">com.kiraing.app</string>
+</resources>

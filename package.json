@@ -9,7 +9,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cap:add:android": "cap add android",
+    "cap:sync": "cap sync",
+    "cap:open": "cap open android"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
@@ -55,11 +58,12 @@
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "update": "^0.7.4",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
+    "@capacitor/core": "^6.2.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

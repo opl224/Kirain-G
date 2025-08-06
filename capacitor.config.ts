@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Kirain\'G',
   webDir: 'out',
   server: {
-    hostname: 'localhost',
     androidScheme: 'https',
   },
 };

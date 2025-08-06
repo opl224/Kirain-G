@@ -8,6 +8,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.2.1'
+        classpath 'com.google.gms:google-services:4.4.2'
     }
 }
 
@@ -20,4 +21,31 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+android {
+    buildToolsVersion = "34.0.0"
+    compileOptions {
+        sourceCompatibility jdkVersion
+        targetCompatibility jdkVersion
+    }
+}
+
+subprojects {
+    project.plugins.whenPluginAdded { plugin ->
+        if (plugin.class.name.equals("com.android.build.gradle.AppPlugin") ||
+            plugin.class.name.equals("com.android.build.gradle.LibraryPlugin")) {
+            project.android {
+                compileSdkVersion project.ext.compileSdkVersion
+                defaultConfig {
+                    minSdkVersion project.ext.minSdkVersion
+                    targetSdkVersion project.ext.targetSdkVersion
+                    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+                }
+                lintOptions {
+                    abortOnError false
+                }
+            }
+        }
+    }
 }

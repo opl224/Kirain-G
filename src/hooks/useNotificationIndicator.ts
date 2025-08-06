@@ -30,7 +30,7 @@ export function useNotificationIndicator(): IndicatorState {
   }, []);
 
   useEffect(() => {
-    // Initial check on mount
+    // Initial check on mount, guaranteed to be client-side
     updateIndicators();
 
     // Listen for custom event

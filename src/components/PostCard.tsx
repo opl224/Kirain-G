@@ -265,7 +265,7 @@ export function PostCard({ postData, author, onPostDelete }: { postData: PostDat
         <Button 
             variant="ghost" 
             size="sm" 
-            className="flex items-center gap-2 text-muted-foreground"
+            className="flex items-center gap-2 text-foreground"
             onClick={handleLikeToggle}
             disabled={isProcessing}
         >
@@ -275,7 +275,7 @@ export function PostCard({ postData, author, onPostDelete }: { postData: PostDat
         <Button 
             variant="ghost" 
             size="sm" 
-            className="flex items-center gap-2 text-muted-foreground"
+            className="flex items-center gap-2 text-foreground"
             onClick={handleSaveToggle}
             disabled={isProcessing}
         >

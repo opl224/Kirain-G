@@ -142,13 +142,22 @@ export default function SearchPage() {
                         ))}
                     </div>
                 ) : hasSearched && results.length === 0 && debouncedSearchTerm.length > 0 ? (
-                     <div className="text-center py-10">
-                        <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk "@{debouncedSearchTerm}"</p>
+                     <div className="text-center py-10 flex flex-col items-center gap-2">
+                        <Image 
+                            src="/images/search-not-found.ico" 
+                            alt="Pengguna tidak ditemukan" 
+                            width={128} 
+                            height={128}
+                            className="opacity-70 mb-4"
+                            unoptimized
+                        />
+                        <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk</p>
+                        <p className="font-semibold text-foreground text-lg">"@{debouncedSearchTerm}"</p>
                     </div>
                 ) : (
                     <div className="flex justify-center items-center py-10">
                         <Image 
-                            src="/images/search.png" 
+                            src="/images/search.ico" 
                             alt="Cari pengguna" 
                             width={256} 
                             height={256}

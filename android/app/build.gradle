@@ -1,13 +1,12 @@
-
 apply plugin: 'com.android.application'
 
 android {
     namespace "com.kiraing.app"
-    compileSdk 34
+    compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.kiraing.app"
-        minSdkVersion 22
-        targetSdkVersion 34
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -26,9 +25,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation "androidx.appcompat:appcompat:${rootProject.ext.androidxAppCompatVersion}"
     implementation project(':capacitor-android')
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    testImplementation "junit:junit:${rootProject.ext.junitVersion}"
+    androidTestImplementation "androidx.test.ext:junit:${rootProject.ext.androidxJunitVersion}"
+    androidTestImplementation "androidx.test.espresso:espresso-core:${rootProject.ext.androidxEspressoCoreVersion}"
 }

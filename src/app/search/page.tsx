@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { BadgeCheck, Search, Users } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
+import Image from 'next/image';
 
 function UserRow({ user, onDialogClose }: { user: User, onDialogClose: () => void }) {
     const { user: authUser } = useAuth();
@@ -145,8 +146,15 @@ export default function SearchPage() {
                         <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk "@{debouncedSearchTerm}"</p>
                     </div>
                 ) : (
-                    <div className="text-center py-10">
-                        <p className="text-muted-foreground">Cari teman atau pengguna lain.</p>
+                    <div className="flex justify-center items-center py-10">
+                        <Image 
+                            src="/images/search.png" 
+                            alt="Cari pengguna" 
+                            width={256} 
+                            height={256}
+                            className="opacity-70"
+                            unoptimized
+                        />
                     </div>
                 )}
             </div>

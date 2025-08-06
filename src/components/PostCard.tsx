@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { PostData, Author } from '@/lib/types';
+import type { PostData, Author, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -98,7 +98,7 @@ export function PostCard({ postData, author, onPostDelete }: { postData: PostDat
         if (user.uid !== author.id) {
             const currentUserDoc = await getDoc(doc(db, 'users', user.uid));
             if(currentUserDoc.exists()) {
-              const currentUserData = currentUserDoc.data();
+              const currentUserData = currentUserDoc.data() as User;
               await addDoc(collection(db, "notifications"), {
                   recipientId: author.id,
                   sender: {

@@ -32,13 +32,6 @@ export default function MainLayout({
         if (!snapshot.empty) {
             localStorage.setItem('hasUnreadNotifications', 'true');
             window.dispatchEvent(new Event('storageUpdated'));
-        } else {
-            // If there are no unread notifications, ensure the flag is false
-            const wasSet = localStorage.getItem('hasUnreadNotifications') === 'true';
-            if (wasSet) {
-                 localStorage.setItem('hasUnreadNotifications', 'false');
-                 window.dispatchEvent(new Event('storageUpdated'));
-            }
         }
     });
 
@@ -55,14 +48,9 @@ export default function MainLayout({
         // We only care if there are new documents. We don't want to trigger on our own new posts
         // immediately after posting, so we check against last seen timestamp.
         if (!snapshot.empty && snapshot.docs[0].data().createdAt.toMillis() > lastSeenTimestamp) {
-            const isNewPostFromAnotherUser = snapshot.docs.some(doc => doc.data().authorId !== user.uid);
-            // Or if we are just loading the app for the first time
-            const isInitialLoad = lastSeenTimestamp === 0;
-
-            if (isNewPostFromAnotherUser || (isInitialLoad && !snapshot.metadata.hasPendingWrites)) {
-                 localStorage.setItem('hasNewPosts', 'true');
-                 window.dispatchEvent(new Event('storageUpdated'));
-            }
+            // No need to check for authorId, any new post should trigger the indicator
+            localStorage.setItem('hasNewPosts', 'true');
+            window.dispatchEvent(new Event('storageUpdated'));
         }
     });
 

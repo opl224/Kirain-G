@@ -43,8 +43,8 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 217 33% 30%;
+    --input: 217 33% 30%;
     --ring: 207 98% 48%;
   }
 }
@@ -270,5 +270,3 @@ input:checked + .slider:before {
 .lock-label:active {
   transform: scale(0.9);
 }
-
-    

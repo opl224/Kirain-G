@@ -23,7 +23,6 @@ import {
   limit, 
   startAfter,
   type QueryDocumentSnapshot,
-  documentId
 } from 'firebase/firestore';
 import type { User, Post, PostData, Author } from '@/lib/types';
 import { ArrowLeft, Loader, BadgeCheck, Lock, Loader2 } from 'lucide-react';
@@ -69,45 +68,37 @@ export default function UserProfilePage() {
   
   const canViewProfile = userProfile && (!userProfile.isPrivate || isFollowing);
 
-  const fetchUserPosts = async (initialLoad = false) => {
+  const fetchUserPosts = async (profile: User, initialLoad = false) => {
     if (!userId) return;
-     if (userProfile && !(!userProfile.isPrivate || isFollowing) && !initialLoad) return;
+    if (!(!profile.isPrivate || isFollowing) && !initialLoad) return;
 
-
-    if (initialLoad) {
-        // Full page loader is active
-    } else {
-        setIsFetchingMorePosts(true);
-    }
+    if (!initialLoad) setIsFetchingMorePosts(true);
 
     try {
-        const postsCollection = collection(db, 'posts');
-        let q = query(
-            postsCollection, 
-            where('authorId', '==', userId), 
-            orderBy('createdAt', 'desc'),
-            limit(POSTS_PER_PAGE)
-        );
+      const postsCollection = collection(db, 'posts');
+      let q = query(
+        postsCollection, 
+        where('authorId', '==', userId), 
+        orderBy('createdAt', 'desc'),
+        limit(POSTS_PER_PAGE)
+      );
 
-        if (!initialLoad && postsLastVisible) {
-            q = query(q, startAfter(postsLastVisible));
-        }
-        
-        const postSnapshot = await getDocs(q);
-        const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
-        const newPosts = newPostsData.map(p => ({...p, author: userProfile as Author})) as Post[];
-        
-        setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
-        setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
-        
-        setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+      if (!initialLoad && postsLastVisible) {
+        q = query(q, startAfter(postsLastVisible));
+      }
 
+      const postSnapshot = await getDocs(q);
+      const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+      
+      const newPosts = newPostsData.map(p => ({ ...p, author: profile as Author })) as Post[];
+
+      setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+      setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
+      setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
     } catch (error) {
-        console.error("Error fetching user posts: ", error);
+      console.error("Error fetching user posts:", error);
     } finally {
-        if (!initialLoad) {
-            setIsFetchingMorePosts(false);
-        }
+      if (!initialLoad) setIsFetchingMorePosts(false);
     }
   };
 
@@ -118,7 +109,6 @@ export default function UserProfilePage() {
       router.push('/');
       return;
     }
-    // Redirect to own profile if viewing self
     if (authUser && authUser.uid === userId) {
       router.push('/profile');
       return;
@@ -127,7 +117,6 @@ export default function UserProfilePage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch user profile
         const userDocRef = doc(db, 'users', userId);
         const userDocSnap = await getDoc(userDocRef);
 
@@ -140,14 +129,12 @@ export default function UserProfilePage() {
           setIsFollowing(!!localIsFollowing);
           setHasRequested(!!localHasRequested);
 
-          // Fetch user posts only if profile is not private or user is a follower
           if (!profileData.isPrivate || localIsFollowing) {
-            // We need to pass profileData to fetchUserPosts to ensure it has the author info
-            await fetchPostsWithAuthor(profileData, true);
+            await fetchUserPosts(profileData, true);
           }
         } else {
           console.log('Pengguna tidak ditemukan!');
-          router.push('/'); // Or a 404 page
+          router.push('/'); 
         }
       } catch (error) {
         console.error('Error fetching profile data: ', error);
@@ -156,44 +143,8 @@ export default function UserProfilePage() {
       }
     };
     
-    const fetchPostsWithAuthor = async (profile: User, initialLoad = false) => {
-      if (!userId) return;
-      if (!(!profile.isPrivate || isFollowing) && !initialLoad) return;
-
-      if (!initialLoad) setIsFetchingMorePosts(true);
-
-      try {
-        const postsCollection = collection(db, 'posts');
-        let q = query(
-          postsCollection, 
-          where('authorId', '==', userId), 
-          orderBy('createdAt', 'desc'),
-          limit(POSTS_PER_PAGE)
-        );
-
-        if (!initialLoad && postsLastVisible) {
-          q = query(q, startAfter(postsLastVisible));
-        }
-
-        const postSnapshot = await getDocs(q);
-        const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
-        
-        // Use the passed profile as the author for all posts
-        const newPosts = newPostsData.map(p => ({ ...p, author: profile as Author })) as Post[];
-
-        setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
-        setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
-        setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
-      } catch (error) {
-        console.error("Error fetching user posts:", error);
-      } finally {
-        if (!initialLoad) setIsFetchingMorePosts(false);
-      }
-    };
-
-
     fetchData();
-  }, [userId, authIsLoading, authUser, router]);
+  }, [userId, authUser, authIsLoading, router]);
   
   const findNotification = async (type: string) => {
       if (!authUser || !userProfile) return null;
@@ -284,7 +235,9 @@ export default function UserProfilePage() {
         setUserProfile(p => p ? {...p, stats: {...p.stats, followers: p.stats.followers + 1}, followers: [...(p.followers || []), authUser.uid]} : null);
         setIsFollowing(true);
         // If we are now following, fetch their posts
-        fetchUserPosts(true);
+        if(userProfile) {
+          fetchUserPosts(userProfile, true);
+        }
         toast({ title: `Anda sekarang mengikuti @${userProfile.handle}` });
       }
     } catch (error: any) {
@@ -385,7 +338,7 @@ export default function UserProfilePage() {
             </div>
             {postsHaveMore && (
               <div className="mt-8 text-center">
-                <Button onClick={() => fetchUserPosts(false)} disabled={isFetchingMorePosts}>
+                <Button onClick={() => userProfile && fetchUserPosts(userProfile, false)} disabled={isFetchingMorePosts}>
                   {isFetchingMorePosts ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

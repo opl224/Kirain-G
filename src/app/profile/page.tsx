@@ -21,48 +21,46 @@ export default function ProfilePage() {
   const [isFetchingMorePosts, setIsFetchingMorePosts] = useState(false);
 
 
-  const fetchUserPosts = async (initialLoad = false) => {
-      if (!authUser) return;
+  const fetchUserPosts = async (profile: User, initialLoad = false) => {
+    if (!authUser) return;
 
-      if (initialLoad) {
-          // Full page loader is already active
-      } else {
-          setIsFetchingMorePosts(true);
+    if (!initialLoad) {
+      setIsFetchingMorePosts(true);
+    }
+
+    try {
+      const postsCollection = collection(db, 'posts');
+      let q = query(
+        postsCollection,
+        where('authorId', '==', authUser.uid),
+        orderBy('createdAt', 'desc'),
+        limit(POSTS_PER_PAGE)
+      );
+
+      if (!initialLoad && postsLastVisible) {
+        q = query(q, startAfter(postsLastVisible));
       }
 
-      try {
-          const postsCollection = collection(db, 'posts');
-          let q = query(
-              postsCollection, 
-              where('authorId', '==', authUser.uid), 
-              orderBy('createdAt', 'desc'),
-              limit(POSTS_PER_PAGE)
-          );
+      const postSnapshot = await getDocs(q);
+      const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
 
-          if (!initialLoad && postsLastVisible) {
-              q = query(q, startAfter(postsLastVisible));
-          }
-          
-          const postSnapshot = await getDocs(q);
-          const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
+      const newPosts = newPostsData.map(post => ({
+        ...post,
+        author: profile as Author,
+      })) as Post[];
 
-           const newPosts = newPostsData.map(post => ({
-                ...post,
-                author: userProfile as Author,
-            })) as Post[];
-          
-          setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
-          setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
-          
-          setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+      setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
+      setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
 
-      } catch (error) {
-          console.error("Error fetching user posts: ", error);
-      } finally {
-           if (!initialLoad) {
-              setIsFetchingMorePosts(false);
-           }
+      setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
+
+    } catch (error) {
+      console.error("Error fetching user posts: ", error);
+    } finally {
+      if (!initialLoad) {
+        setIsFetchingMorePosts(false);
       }
+    }
   };
 
 
@@ -84,7 +82,7 @@ export default function ProfilePage() {
           const profileData = userDocSnap.data() as User;
           setUserProfile(profileData);
            // Fetch initial posts (pass profile data to avoid race condition)
-            await fetchUserPostsWithProfile(profileData, true);
+            await fetchUserPosts(profileData, true);
 
         } else {
           console.log("No such user!");
@@ -95,49 +93,6 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-    
-    const fetchUserPostsWithProfile = async (profile: User, initialLoad = false) => {
-        if (!authUser) return;
-
-        if (!initialLoad) {
-            setIsFetchingMorePosts(true);
-        }
-
-        try {
-            const postsCollection = collection(db, 'posts');
-            let q = query(
-                postsCollection, 
-                where('authorId', '==', authUser.uid), 
-                orderBy('createdAt', 'desc'),
-                limit(POSTS_PER_PAGE)
-            );
-
-            if (!initialLoad && postsLastVisible) {
-                q = query(q, startAfter(postsLastVisible));
-            }
-            
-            const postSnapshot = await getDocs(q);
-            const newPostsData = postSnapshot.docs.map(doc => ({ ...doc.data() as PostData, id: doc.id }));
-            
-            const newPosts = newPostsData.map(post => ({
-                ...post,
-                author: profile as Author,
-            })) as Post[];
-            
-            setPostsLastVisible(postSnapshot.docs[postSnapshot.docs.length - 1] || null);
-            setPostsHaveMore(postSnapshot.docs.length === POSTS_PER_PAGE);
-            
-            setUserPosts(prev => initialLoad ? newPosts : [...prev, ...newPosts]);
-
-        } catch (error) {
-            console.error("Error fetching user posts: ", error);
-        } finally {
-            if (!initialLoad) {
-                setIsFetchingMorePosts(false);
-            }
-        }
-    };
-
 
     fetchData();
   }, [authUser, authIsLoading]);
@@ -168,7 +123,7 @@ export default function ProfilePage() {
       onPostDelete={handlePostDelete}
       hasMorePosts={postsHaveMore}
       isFetchingMorePosts={isFetchingMorePosts}
-      onLoadMorePosts={() => fetchUserPosts(false)}
+      onLoadMorePosts={() => fetchUserPosts(userProfile, false)}
     />
   );
 }

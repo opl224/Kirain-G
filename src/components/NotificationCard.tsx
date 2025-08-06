@@ -11,14 +11,13 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, arrayRemove, arrayUnion, increment, addDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 
 interface NotificationCardProps {
   notification: Notification;
-  onUpdate: (id: string, updates: Partial<Notification>) => void;
   onRemove: (id: string) => void;
   currentUserId?: string;
 }

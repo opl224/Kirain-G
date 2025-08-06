@@ -41,8 +41,8 @@ export default function LikesPage() {
           ...doc.data()
         })) as PostData[];
         
-        // Get unique author IDs from posts
-        const authorIds = [...new Set(postsData.map(p => p.authorId))];
+        // Get unique author IDs from posts, filtering out any invalid IDs
+        const authorIds = [...new Set(postsData.map(p => p.authorId).filter(id => !!id))];
 
         // Fetch authors' data
         const authors: { [id: string]: Author } = {};

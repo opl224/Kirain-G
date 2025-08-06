@@ -159,12 +159,12 @@ export default function SearchPage() {
                             className="opacity-70"
                             unoptimized
                         />
-                        <p className="text-muted-foreground">Tidak ada pengguna ditemukan untuk "@{debouncedSearchTerm}"</p>
+                        <p className="text-muted-foreground">Pengguna tidak ada "@{debouncedSearchTerm}"</p>
                     </div>
                 ) : (
                     <div className="flex justify-center items-center py-10">
                         <Image 
-                            src="/images/search.png" 
+                            src="/images/search.ico" 
                             alt="Cari pengguna" 
                             width={256} 
                             height={256}

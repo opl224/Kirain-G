@@ -4,15 +4,16 @@
 import type { Notification, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, UserPlus, BadgeCheck } from 'lucide-react';
+import { Heart, UserPlus, BadgeCheck, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, arrayRemove, arrayUnion, increment, addDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 
 interface NotificationCardProps {
@@ -26,6 +27,8 @@ interface NotificationCardProps {
 export function NotificationCard({ notification, onRemove, currentUserId }: NotificationCardProps) {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout>();
 
   const superUserId = "GFQXQNBxx6QcYRjWPMFeT3CuBai1";
   const isSuperUser = currentUserId === superUserId;
@@ -37,13 +40,26 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
       case 'like':
         return <Heart className="h-5 w-5 text-red-500" />;
       case 'follow':
+      case 'follow_request':
         return <UserPlus className="h-5 w-5 text-primary" />;
       case 'verification_request':
         return <BadgeCheck className="h-5 w-5 text-blue-500" />;
-      case 'follow_request':
-        return <UserPlus className="h-5 w-5 text-primary" />;
       default:
         return null;
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsProcessing(true);
+    try {
+        const notifRef = doc(db, 'notifications', notification.id);
+        await deleteDoc(notifRef);
+        toast({ title: "Notifikasi dihapus." });
+        onRemove(notification.id);
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: "Error", description: error.message });
+        setIsProcessing(false);
     }
   };
 
@@ -76,22 +92,19 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
             const userToVerifyRef = doc(db, 'users', notification.sender.id);
             await updateDoc(userToVerifyRef, { isVerified: true });
         } else if (isFollowRequest) {
-            // Logic for approving follow request
             const currentUserRef = doc(db, 'users', currentUserId);
             const senderUserRef = doc(db, 'users', notification.sender.id);
             
-            // Add to followers/following lists
             await updateDoc(currentUserRef, { 
                 followers: arrayUnion(notification.sender.id),
                 'stats.followers': increment(1),
-                followRequests: arrayRemove(notification.sender.id) // remove from requests
+                followRequests: arrayRemove(notification.sender.id) 
             });
             await updateDoc(senderUserRef, { 
                 following: arrayUnion(currentUserId),
                 'stats.following': increment(1),
             });
             
-            // Create a "started following you" notification for the current user (optional)
             const currentUserDoc = await getDoc(currentUserRef);
             const currentUserData = currentUserDoc.data() as User;
 
@@ -103,10 +116,8 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
                 read: false,
                 createdAt: serverTimestamp(),
             });
-
         }
       
-      // Delete the processed notification
       const notifRef = doc(db, 'notifications', notification.id);
       await deleteDoc(notifRef);
 
@@ -132,25 +143,46 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
   }
 
   const senderProfileLink = `/user?id=${notification.sender.id}`;
+  
+  const handlePointerDown = () => {
+    longPressTimer.current = setTimeout(() => {
+        setIsDeleteMode(true);
+    }, 500); // 500ms for long press
+  };
+
+  const handlePointerUp = () => {
+    clearTimeout(longPressTimer.current);
+  };
+  
+  const handlePointerLeave = () => {
+    clearTimeout(longPressTimer.current);
+  };
+
+  const exitDeleteMode = () => {
+    setIsDeleteMode(false);
+  }
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md">
-      <CardContent className="p-4 flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-            <Link href={senderProfileLink}>
-                <div className="relative">
-                    <Avatar>
-                        <AvatarImage src={notification.sender.avatarUrl} alt={notification.sender.name} />
-                        <AvatarFallback>{notification.sender.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-1 -right-1 bg-background p-0.5 rounded-full">
-                        {getIcon()}
-                    </div>
-                </div>
+    <Card 
+        className={cn("overflow-hidden transition-all hover:shadow-md", isDeleteMode && "bg-destructive/10")}
+        onMouseDown={handlePointerDown}
+        onMouseUp={handlePointerUp}
+        onMouseLeave={handlePointerLeave}
+        onTouchStart={handlePointerDown}
+        onTouchEnd={handlePointerUp}
+        onClick={isDeleteMode ? exitDeleteMode : undefined}
+    >
+      <CardContent className="p-4 flex items-center justify-between gap-4">
+        <div className="flex items-start gap-4 flex-grow">
+            <Link href={senderProfileLink} onClick={(e) => e.stopPropagation()}>
+                <Avatar>
+                    <AvatarImage src={notification.sender.avatarUrl} alt={notification.sender.name} />
+                    <AvatarFallback>{notification.sender.name.charAt(0)}</AvatarFallback>
+                </Avatar>
             </Link>
             <div className="flex-grow">
                 <p className="text-sm">
-                    <Link href={senderProfileLink}>
+                    <Link href={senderProfileLink} onClick={(e) => e.stopPropagation()}>
                         <span className="font-semibold hover:underline">{notification.sender.name}</span>
                     </Link>
                     {' '}
@@ -159,18 +191,33 @@ export function NotificationCard({ notification, onRemove, currentUserId }: Noti
                 <p className="text-xs text-muted-foreground mt-1">
                     {timeAgo}
                 </p>
+                 {((isSuperUser && isVerificationRequest) || isFollowRequest) && !isDeleteMode && (
+                    <div className="flex justify-start gap-2 mt-3">
+                        <Button size="sm" variant="outline" onClick={handleDecline} disabled={isProcessing}>
+                            Tolak
+                        </Button>
+                        <Button size="sm" onClick={handleApprove} disabled={isProcessing}>
+                            Setujui
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
-        {(isSuperUser && isVerificationRequest) || isFollowRequest ? (
-            <div className="flex justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={handleDecline} disabled={isProcessing}>
-                    Tolak
+        <div className="flex-shrink-0">
+            {isDeleteMode ? (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/20"
+                    onClick={handleDelete}
+                    disabled={isProcessing}
+                >
+                    <Trash2 className="h-5 w-5" />
                 </Button>
-                <Button size="sm" onClick={handleApprove} disabled={isProcessing}>
-                    Setujui
-                </Button>
-            </div>
-        ) : null}
+            ) : (
+                getIcon()
+            )}
+        </div>
       </CardContent>
     </Card>
   );

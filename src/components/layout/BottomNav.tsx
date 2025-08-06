@@ -5,49 +5,32 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Home, PlusSquare, Bell, User as UserIcon, Search } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Image from 'next/image';
 
 const navItems = [
-  {
-    href: '/',
-    label: 'Beranda',
-    Icon: Home,
-    storageKey: 'hasNewPosts',
-  },
-  {
-    href: '/search',
-    label: 'Cari',
-    Icon: Search,
-  },
-  {
-    href: '/post',
-    label: 'Post',
-    Icon: PlusSquare,
-  },
-  {
-    href: '/notifications',
-    label: 'Notifikasi',
-    Icon: Bell,
-    storageKey: 'hasUnreadNotifications',
-  },
-  {
-    href: '/profile',
-    label: 'Profil',
-    Icon: UserIcon,
-  },
+  { href: '/', label: 'Beranda', icon: 'home' },
+  { href: '/search', label: 'Cari', icon: 'search' },
+  { href: '/post', label: 'Post', icon: 'plus-square' },
+  { href: '/notifications', label: 'Notifikasi', icon: 'bell' },
+  { href: '/profile', label: 'Profil', icon: 'user' },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const [indicators, setIndicators] = useState<Record<string, boolean>>({});
+  const { theme } = useTheme();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarInitial, setAvatarInitial] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -64,27 +47,12 @@ export default function BottomNav() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const checkStorage = () => {
-      const newIndicators: Record<string, boolean> = {};
-      navItems.forEach((item) => {
-        if (item.storageKey) {
-          const hasNew = localStorage.getItem(item.storageKey) === 'true';
-          newIndicators[item.storageKey] = hasNew;
-        }
-      });
-      setIndicators(newIndicators);
-    };
+  const iconDir = theme === 'dark' ? 'white' : 'dark';
 
-    checkStorage();
-    window.addEventListener('storageUpdated', checkStorage);
-    window.addEventListener('storage', checkStorage);
-
-    return () => {
-      window.removeEventListener('storageUpdated', checkStorage);
-      window.removeEventListener('storage', checkStorage);
-    };
-  }, []);
+  if (!isMounted) {
+    // Render a placeholder or null to avoid hydration mismatch
+    return <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden z-50"></footer>;
+  }
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden z-50">
@@ -94,10 +62,8 @@ export default function BottomNav() {
             const isActive =
               (item.href === '/' && pathname === '/') ||
               (item.href !== '/' && pathname.startsWith(item.href));
-              
-            const showIndicator = item.storageKey
-              ? indicators[item.storageKey]
-              : false;
+
+            const iconSrc = `/icons-${iconDir}/${item.icon}${isActive ? '-fill' : ''}.svg`;
 
             return (
               <li key={item.href} className="h-full">
@@ -110,26 +76,22 @@ export default function BottomNav() {
                 >
                   <div className="relative w-7 h-7 flex items-center justify-center">
                     {item.href === '/profile' && user ? (
-                      <Avatar
-                        className={cn(
-                          'w-7 h-7',
-                          isActive && 'ring-2 ring-primary'
-                        )}
-                      >
+                      <Avatar className={cn('w-7 h-7', isActive && 'ring-2 ring-primary')}>
                         <AvatarImage src={avatarUrl ?? undefined} alt="User Avatar" />
                         <AvatarFallback>{avatarInitial}</AvatarFallback>
                       </Avatar>
                     ) : (
-                      <item.Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
-                    )}
-                    {showIndicator && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-2.5 w-2.5 p-0 border-2 border-card"
+                      <Image
+                        src={iconSrc}
+                        alt={item.label}
+                        width={26}
+                        height={26}
+                        className="transition-transform duration-200"
+                        unoptimized
                       />
                     )}
                   </div>
-                  <span className="text-[10px] sr-only">{item.label}</span>
+                   <span className="text-[10px] sr-only">{item.label}</span>
                 </Link>
               </li>
             );
